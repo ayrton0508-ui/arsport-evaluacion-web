@@ -1,4 +1,5 @@
 'use client';
+
 import {useEffect,useMemo,useState} from 'react';
 
 const areas=[
@@ -16,10 +17,17 @@ const areas=[
   ['guide','Guía','?']
 ];
 
+const today=()=>new Date().toISOString().slice(0,10);
+
+const newId=()=>{
+  return `ARS-${String(Date.now()).slice(-6)}`;
+};
+
 const empty={
   id:'',
   name:'',
-  date:new Date().toISOString().slice(0,10),
+  date:today(),
+  birthDate:'',
   age:'',
   sex:'',
   sport:'',
@@ -108,18 +116,23 @@ const empty={
   sj1:'',
   sj2:'',
   sj3:'',
+
   cmj1:'',
   cmj2:'',
   cmj3:'',
+
   abk1:'',
   abk2:'',
   abk3:'',
+
   drop1:'',
   drop2:'',
   drop3:'',
+
   uniD1:'',
   uniD2:'',
   uniD3:'',
+
   uniI1:'',
   uniI2:'',
   uniI3:'',
@@ -127,6 +140,7 @@ const empty={
   medChest1:'',
   medChest2:'',
   medChest3:'',
+
   medBehind1:'',
   medBehind2:'',
   medBehind3:'',
@@ -134,9 +148,11 @@ const empty={
   s5_1:'',
   s5_2:'',
   s5_3:'',
+
   s10_1:'',
   s10_2:'',
   s10_3:'',
+
   s20_1:'',
   s20_2:'',
   s20_3:'',
@@ -144,6 +160,7 @@ const empty={
   changeD1:'',
   changeD2:'',
   changeD3:'',
+
   changeI1:'',
   changeI2:'',
   changeI3:'',
@@ -151,6 +168,7 @@ const empty={
   turnD1:'',
   turnD2:'',
   turnD3:'',
+
   turnI1:'',
   turnI2:'',
   turnI3:'',
@@ -211,6 +229,7 @@ const max=(...x)=>{
 
 const avg=(...x)=>{
   const a=x.map(n).filter(v=>v!==null);
+
   return a.length
     ?a.reduce((s,v)=>s+v,0)/a.length
     :'';
@@ -219,6 +238,7 @@ const avg=(...x)=>{
 const asym=(a,b)=>{
   a=n(a);
   b=n(b);
+
   return a!==null&&b!==null&&Math.max(a,b)>0
     ?Math.abs(a-b)/Math.max(a,b)*100
     :'';
@@ -227,23 +247,50 @@ const asym=(a,b)=>{
 const pct=(a,b)=>{
   a=n(a);
   b=n(b);
+
   return a!==null&&b!==null&&b!==0
     ?(a-b)/b*100
     :'';
 };
 
-function minv(...x){
-  const a=x.map(n).filter(v=>v!==null);
-  return a.length?Math.min(...a):null;
-}
-
-function velocityLoss(first,last){
+const velocityLoss=(first,last)=>{
   const a=n(first);
   const b=n(last);
 
-  if(a===null||b===null||a===0) return '';
+  return a!==null&&b!==null&&a!==0
+    ?(a-b)/a*100
+    :'';
+};
 
-  return (a-b)/a*100;
+function ageFromBirthDate(birth,date=today()){
+
+  if(!birth) return '';
+
+  const b=new Date(`${birth}T00:00:00`);
+  const d=new Date(`${date||today()}T00:00:00`);
+
+  if(
+    Number.isNaN(b.getTime())||
+    Number.isNaN(d.getTime())||
+    b>d
+  ){
+    return '';
+  }
+
+  let age=
+    d.getFullYear()-
+    b.getFullYear();
+
+  const before=
+    d.getMonth()<b.getMonth()||
+    (
+      d.getMonth()===b.getMonth()&&
+      d.getDate()<b.getDate()
+    );
+
+  if(before) age--;
+
+  return age>=0?age:'';
 }
 
 function calc(d){
@@ -274,7 +321,7 @@ function calc(d){
         d.sex==='M'
           ?10*w+6.25*h-5*age+5
           :10*w+6.25*h-5*age-161
-       )
+      )
       :'';
 
   const get=
@@ -283,25 +330,88 @@ function calc(d){
       :'';
 
   const vbt={
-    sq:avg(d.vbtSq1,d.vbtSq2,d.vbtSq3),
-    bench:avg(d.vbtBench1,d.vbtBench2,d.vbtBench3),
-    dead:avg(d.vbtDead1,d.vbtDead2,d.vbtDead3),
-    ohp:avg(d.vbtOHP1,d.vbtOHP2,d.vbtOHP3)
+    sq:avg(
+      d.vbtSq1,
+      d.vbtSq2,
+      d.vbtSq3
+    ),
+
+    bench:avg(
+      d.vbtBench1,
+      d.vbtBench2,
+      d.vbtBench3
+    ),
+
+    dead:avg(
+      d.vbtDead1,
+      d.vbtDead2,
+      d.vbtDead3
+    ),
+
+    ohp:avg(
+      d.vbtOHP1,
+      d.vbtOHP2,
+      d.vbtOHP3
+    )
   };
 
   const vbtLoss={
-    sq:velocityLoss(d.vbtSq1,d.vbtSq3),
-    bench:velocityLoss(d.vbtBench1,d.vbtBench3),
-    dead:velocityLoss(d.vbtDead1,d.vbtDead3),
-    ohp:velocityLoss(d.vbtOHP1,d.vbtOHP3)
+    sq:velocityLoss(
+      d.vbtSq1,
+      d.vbtSq3
+    ),
+
+    bench:velocityLoss(
+      d.vbtBench1,
+      d.vbtBench3
+    ),
+
+    dead:velocityLoss(
+      d.vbtDead1,
+      d.vbtDead3
+    ),
+
+    ohp:velocityLoss(
+      d.vbtOHP1,
+      d.vbtOHP3
+    )
   };
 
-  const sj=max(d.sj1,d.sj2,d.sj3);
-  const cmj=max(d.cmj1,d.cmj2,d.cmj3);
-  const abk=max(d.abk1,d.abk2,d.abk3);
-  const drop=max(d.drop1,d.drop2,d.drop3);
-  const ud=max(d.uniD1,d.uniD2,d.uniD3);
-  const ui=max(d.uniI1,d.uniI2,d.uniI3);
+  const sj=max(
+    d.sj1,
+    d.sj2,
+    d.sj3
+  );
+
+  const cmj=max(
+    d.cmj1,
+    d.cmj2,
+    d.cmj3
+  );
+
+  const abk=max(
+    d.abk1,
+    d.abk2,
+    d.abk3
+  );
+
+  const drop=max(
+    d.drop1,
+    d.drop2,
+    d.drop3
+  );
+
+  const ud=max(
+    d.uniD1,
+    d.uniD2,
+    d.uniD3
+  );
+
+  const ui=max(
+    d.uniI1,
+    d.uniI2,
+    d.uniI3
+  );
 
   const ie=
     sj&&cmj
@@ -313,30 +423,81 @@ function calc(d){
       ?(abk-cmj)/cmj*100
       :'';
 
-  const ua=asym(ud,ui);
+  const ua=asym(
+    ud,
+    ui
+  );
 
   const rel=
     w&&n(d.sq1rm)
       ?n(d.sq1rm)/w
       :'';
 
-  const s5=best(d.s5_1,d.s5_2,d.s5_3);
-  const s10=best(d.s10_1,d.s10_2,d.s10_3);
-  const s20=best(d.s20_1,d.s20_2,d.s20_3);
+  const s5=best(
+    d.s5_1,
+    d.s5_2,
+    d.s5_3
+  );
 
-  const v5=s5?5/s5:'';
-  const v10=s10?10/s10:'';
-  const v20=s20?20/s20:'';
+  const s10=best(
+    d.s10_1,
+    d.s10_2,
+    d.s10_3
+  );
 
-  const cD=best(d.changeD1,d.changeD2,d.changeD3);
-  const cI=best(d.changeI1,d.changeI2,d.changeI3);
-  const cAs=asym(cD,cI);
+  const s20=best(
+    d.s20_1,
+    d.s20_2,
+    d.s20_3
+  );
 
-  const tD=best(d.turnD1,d.turnD2,d.turnD3);
-  const tI=best(d.turnI1,d.turnI2,d.turnI3);
+  const v5=
+    s5
+      ?5/s5
+      :'';
+
+  const v10=
+    s10
+      ?10/s10
+      :'';
+
+  const v20=
+    s20
+      ?20/s20
+      :'';
+
+  const cD=best(
+    d.changeD1,
+    d.changeD2,
+    d.changeD3
+  );
+
+  const cI=best(
+    d.changeI1,
+    d.changeI2,
+    d.changeI3
+  );
+
+  const cAs=asym(
+    cD,
+    cI
+  );
+
+  const tD=best(
+    d.turnD1,
+    d.turnD2,
+    d.turnD3
+  );
+
+  const tI=best(
+    d.turnI1,
+    d.turnI2,
+    d.turnI3
+  );
 
   const hrRec=
-    n(d.hrPost)!==null&&n(d.hr1)!==null
+    n(d.hrPost)!==null&&
+    n(d.hr1)!==null
       ?n(d.hrPost)-n(d.hr1)
       :'';
 
@@ -352,49 +513,71 @@ function calc(d){
     tmb,
     get,
     hydration,
+
     vbt,
     vbtLoss,
+
     sj,
     cmj,
     abk,
     drop,
     ud,
     ui,
+
     ie,
     ib,
     ua,
     rel,
+
     s5,
     s10,
     s20,
+
     v5,
     v10,
     v20,
+
     cD,
     cI,
     cAs,
+
     tD,
     tI,
+
     hrRec
   };
 }
+
+/* =========================================================
+   COMPONENTES
+   ========================================================= */
 
 function Input({
   label,
   value,
   onChange,
   type='text',
-  step
+  step,
+  min,
+  max,
+  readOnly=false
 }){
+
   return(
     <label className="field">
+
       <span>{label}</span>
+
       <input
         value={value??''}
         onChange={e=>onChange(e.target.value)}
         type={type}
         step={step}
+        min={min}
+        max={max}
+        readOnly={readOnly}
       />
+
     </label>
   );
 }
@@ -405,34 +588,97 @@ function Select({
   onChange,
   children
 }){
+
   return(
     <label className="field">
+
       <span>{label}</span>
+
       <select
         value={value??''}
         onChange={e=>onChange(e.target.value)}
       >
         {children}
       </select>
+
     </label>
   );
 }
 
+function Textarea({
+  label,
+  value,
+  onChange,
+  placeholder
+}){
+
+  return(
+    <label className="field full">
+
+      <span>{label}</span>
+
+      <textarea
+        value={value??''}
+        onChange={e=>onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+
+    </label>
+  );
+}
+
+/* =========================================================
+   SECCIÓN CON FLECHA
+   ========================================================= */
+
 function Section({
   title,
   sub,
-  children
+  children,
+  defaultOpen=true
 }){
+
+  const[
+    open,
+    setOpen
+  ]=useState(defaultOpen);
+
   return(
+
     <section className="section">
-      <div className="sectitle">
+
+      <button
+        type="button"
+        className="sectitle"
+        onClick={()=>setOpen(v=>!v)}
+      >
+
         <div>
+
           <h3>{title}</h3>
-          {sub&&<small>{sub}</small>}
+
+          {sub&&
+            <small>
+              {sub}
+            </small>
+          }
+
         </div>
-      </div>
-      {children}
+
+        <b className="chevron">
+          {open?'⌃':'⌄'}
+        </b>
+
+      </button>
+
+      {open&&
+        <div className="sectionbody">
+          {children}
+        </div>
+      }
+
     </section>
+
   );
 }
 
@@ -440,29 +686,35 @@ function Table({
   headers,
   children
 }){
-  return(
-    <div className="tablewrap">
-      <table>
-        <thead>
-          <tr>
-            {headers.map(h=><th key={h}>{h}</th>)}
-          </tr>
-        </thead>
-        <tbody>{children}</tbody>
-      </table>
-    </div>
-  );
-}
 
-function Row({
-  label,
-  children
-}){
   return(
-    <tr>
-      <td className="rowlabel">{label}</td>
-      {children}
-    </tr>
+
+    <div className="tablewrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+
+            {headers.map(h=>
+              <th key={h}>
+                {h}
+              </th>
+            )}
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+          {children}
+        </tbody>
+
+      </table>
+
+    </div>
+
   );
 }
 
@@ -472,15 +724,22 @@ function CellInput({
   type='number',
   step='0.01'
 }){
+
   return(
+
     <td>
+
       <input
         value={v??''}
-        onChange={e=>set(e.target.value)}
+        onChange={e=>
+          set(e.target.value)
+        }
         type={type}
         step={step}
       />
+
     </td>
+
   );
 }
 
@@ -489,40 +748,61 @@ function Metric({
   value,
   unit
 }){
+
   return(
+
     <div className="metric">
-      <span>{label}</span>
+
+      <span>
+        {label}
+      </span>
+
       <strong>
+
         {
-          value!==''&&value!==null
+          value!==''&&
+          value!==null
+
             ?typeof value==='number'
               ?value.toFixed(2)
               :value
+
             :'—'
         }
+
       </strong>
-      {unit&&<small>{unit}</small>}
+
+      {unit&&
+        <small>
+          {unit}
+        </small>
+      }
+
     </div>
+
   );
 }
 
 /* =========================================================
-   DATOS MAESTROS
+   DATOS VINCULADOS
    ========================================================= */
 
 function LinkedAthlete({d}){
 
   return(
+
     <div
       className="linked-athlete"
       style={{
         display:'grid',
-        gridTemplateColumns:'2fr repeat(6,1fr)',
+        gridTemplateColumns:
+          '2fr repeat(6,1fr)',
         gap:10,
         alignItems:'center',
         padding:'14px 16px',
         border:'1px solid #ddd',
-        borderLeft:'5px solid #f2cc00',
+        borderLeft:
+          '5px solid #f2cc00',
         borderRadius:10,
         background:'#fafafa',
         marginBottom:14
@@ -530,6 +810,7 @@ function LinkedAthlete({d}){
     >
 
       <div>
+
         <small
           style={{
             display:'block',
@@ -543,9 +824,14 @@ function LinkedAthlete({d}){
           DATOS VINCULADOS DESDE FICHA 01
         </small>
 
-        <strong style={{fontSize:16}}>
+        <strong
+          style={{
+            fontSize:16
+          }}
+        >
           {d.name||'Sin registrar'}
         </strong>
+
       </div>
 
       <div>
@@ -587,6 +873,7 @@ function LinkedAthlete({d}){
       </div>
 
     </div>
+
   );
 }
 
@@ -596,31 +883,61 @@ function LinkedAthlete({d}){
 
 function App(){
 
-  const[page,setPage]=useState('dashboard');
-  const[d,setD]=useState(empty);
-  const[history,setHistory]=useState([]);
-  const[loaded,setLoaded]=useState(false);
+  const[
+    page,
+    setPage
+  ]=useState('dashboard');
+
+  const[
+    d,
+    setD
+  ]=useState({
+    ...empty,
+    id:newId()
+  });
+
+  const[
+    history,
+    setHistory
+  ]=useState([]);
+
+  const[
+    loaded,
+    setLoaded
+  ]=useState(false);
 
   useEffect(()=>{
+
     try{
 
-      const a=
+      const h=
         JSON.parse(
-          localStorage.getItem('arsport-evals')||'[]'
+          localStorage.getItem(
+            'arsport-evals'
+          )||'[]'
         );
 
-      setHistory(a);
+      setHistory(
+        Array.isArray(h)
+          ?h
+          :[]
+      );
 
-      const last=
+      const cur=
         JSON.parse(
-          localStorage.getItem('arsport-current')||'null'
+          localStorage.getItem(
+            'arsport-current'
+          )||'null'
         );
 
-      if(last){
+      if(cur){
+
         setD({
           ...empty,
-          ...last
+          ...cur,
+          id:cur.id||newId()
         });
+
       }
 
     }catch{}
@@ -630,54 +947,79 @@ function App(){
   },[]);
 
   useEffect(()=>{
+
     if(loaded){
+
       localStorage.setItem(
         'arsport-current',
         JSON.stringify(d)
       );
+
     }
-  },[d,loaded]);
 
-  const c=useMemo(
-    ()=>calc(d),
-    [d]
-  );
+  },[
+    d,
+    loaded
+  ]);
 
-  const set=(k,v)=>
-    setD(x=>({
-      ...x,
-      [k]:v
-    }));
+  const c=
+    useMemo(
+      ()=>calc(d),
+      [d]
+    );
+
+  const set=(
+    key,
+    value
+  )=>{
+
+    setD(
+      x=>({
+        ...x,
+        [key]:value
+      })
+    );
+
+  };
 
   const reset=()=>{
 
     setD({
       ...empty,
-      id:'ARS-'+String(Date.now()).slice(-6),
-      date:new Date().toISOString().slice(0,10)
+      id:newId(),
+      date:today()
     });
+
+    setPage('f1');
 
   };
 
   const save=()=>{
 
-    if(!d.name){
+    if(!d.name.trim()){
 
-      alert('Completa primero el nombre del deportista en Ficha 01.');
+      alert(
+        'Completa el nombre del deportista en Ficha 01.'
+      );
+
       setPage('f1');
-      return;
 
+      return;
     }
 
     const rec={
       ...d,
       calc:c,
-      savedAt:new Date().toISOString()
+      savedAt:
+        new Date().toISOString()
     };
 
     const arr=[
       ...history.filter(
-        x=>x.id!==d.id||x.date!==d.date
+        x=>!(
+          x.id===d.id&&
+          x.date===d.date
+        )
       ),
       rec
     ];
@@ -689,59 +1031,45 @@ function App(){
       JSON.stringify(arr)
     );
 
-    alert('Evaluación guardada en Historial.');
-
-  };
-
-  const print=()=>window.print();
-
-  const exportJSON=()=>{
-
-    const blob=new Blob(
-      [
-        JSON.stringify(
-          history,
-          null,
-          2
-        )
-      ],
-      {
-        type:'application/json'
-      }
+    alert(
+      'Evaluación guardada correctamente.'
     );
 
-    const a=document.createElement('a');
-
-    a.href=URL.createObjectURL(blob);
-
-    a.download='arsport-historial.json';
-
-    a.click();
-
-    URL.revokeObjectURL(a.href);
-
   };
 
-  const previous=useMemo(()=>{
+  const previousBeforeCurrent=
+    useMemo(()=>{
 
-    const a=
-      history
-        .filter(x=>x.id===d.id)
-        .sort(
-          (x,y)=>
-            (x.date||'').localeCompare(
-              y.date||''
-            )
-        );
+      const a=
+        history
+          .filter(
+            x=>x.id===d.id
+          )
+          .sort(
+            (x,y)=>
+              (x.date||'')
+                .localeCompare(
+                  y.date||''
+                )||
+              (x.savedAt||'')
+                .localeCompare(
+                  y.savedAt||''
+                )
+          );
 
-    return a.length>1
-      ?a[a.length-2]
-      :null;
+      return a.length>1
+        ?a[a.length-2]
+        :null;
 
-  },[history,d.id]);
+    },[
+      history,
+      d.id
+    ]);
 
   const title=
-    areas.find(x=>x[0]===page)?.[1]||
+    areas.find(
+      x=>x[0]===page
+    )?.[1]||
     'Dashboard';
 
   return(
@@ -751,8 +1079,15 @@ function App(){
       <aside className="sidebar">
 
         <div className="brand">
-          <b>ARSPORT</b>
-          <span>CENTRO DE ENTRENAMIENTO</span>
+
+          <b>
+            ARSPORT
+          </b>
+
+          <span>
+            CENTRO DE ENTRENAMIENTO
+          </span>
+
         </div>
 
         <div className="tag">
@@ -774,8 +1109,13 @@ function App(){
                 setPage(a[0])
               }
             >
-              <i>{a[2]}</i>
+
+              <i>
+                {a[2]}
+              </i>
+
               {a[1]}
+
             </button>
 
           ))}
@@ -783,8 +1123,11 @@ function App(){
         </nav>
 
         <div className="sidefoot">
-          Sistema Integral<br/>
+
+          Sistema Integral
+          <br/>
           Evaluación Deportiva
+
         </div>
 
       </aside>
@@ -794,11 +1137,15 @@ function App(){
         <header>
 
           <div>
+
             <span className="eyebrow">
               ARSPORT / {title.toUpperCase()}
             </span>
 
-            <h1>{title}</h1>
+            <h1>
+              {title}
+            </h1>
+
           </div>
 
           <div className="actions">
@@ -814,7 +1161,11 @@ function App(){
               Guardar
             </button>
 
-            <button onClick={print}>
+            <button
+              onClick={()=>
+                window.print()
+              }
+            >
               Imprimir / PDF
             </button>
 
@@ -835,19 +1186,27 @@ function App(){
             </strong>
 
             <span>
-              {d.id||'Sin ID'} · {d.sport||'Sin deporte'} · {d.category||'Sin categoría'}
+              {d.id||'Sin ID'}
+              {' · '}
+              {d.sport||'Sin deporte'}
+              {' · '}
+              {d.category||'Sin categoría'}
             </span>
 
           </div>
 
           <div className="status">
 
-            <span>Estado</span>
+            <span>
+              Estado
+            </span>
 
             <b>
-              {d.name
-                ?'En evaluación'
-                :'Nuevo registro'}
+              {
+                d.name
+                  ?'En evaluación'
+                  :'Nuevo registro'
+              }
             </b>
 
           </div>
@@ -859,8 +1218,6 @@ function App(){
             d={d}
             c={c}
             history={history}
-            previous={previous}
-            set={set}
             go={setPage}
           />
         }
@@ -869,6 +1226,7 @@ function App(){
           <Ficha01
             d={d}
             set={set}
+            go={setPage}
           />
         }
 
@@ -883,7 +1241,6 @@ function App(){
         {page==='f3'&&
           <Ficha03
             d={d}
-            c={c}
             set={set}
           />
         }
@@ -901,6 +1258,9 @@ function App(){
             d={d}
             c={c}
             set={set}
+            previous={
+              previousBeforeCurrent
+            }
           />
         }
 
@@ -925,7 +1285,9 @@ function App(){
             d={d}
             c={c}
             set={set}
-            previous={previous}
+            previous={
+              previousBeforeCurrent
+            }
           />
         }
 
@@ -940,7 +1302,9 @@ function App(){
           <Progress
             d={d}
             c={c}
-            previous={previous}
+            previous={
+              previousBeforeCurrent
+            }
           />
         }
 
@@ -967,8 +1331,6 @@ function Dashboard({
   d,
   c,
   history,
-  previous,
-  set,
   go
 }){
 
@@ -992,8 +1354,11 @@ function Dashboard({
         </span>
 
         <h2>
-          Controla el rendimiento.{' '}
-          <em>Demuestra la evolución.</em>
+          Controla el rendimiento.
+          {' '}
+          <em>
+            Demuestra la evolución.
+          </em>
         </h2>
 
         <p>
@@ -1004,15 +1369,27 @@ function Dashboard({
 
         <div className="quick">
 
-          <button onClick={()=>go('f1')}>
+          <button
+            onClick={()=>
+              go('f1')
+            }
+          >
             Datos del deportista →
           </button>
 
-          <button onClick={()=>go('f4')}>
+          <button
+            onClick={()=>
+              go('f4')
+            }
+          >
             Evaluar fuerza/potencia →
           </button>
 
-          <button onClick={()=>go('f8')}>
+          <button
+            onClick={()=>
+              go('f8')
+            }
+          >
             Generar informe →
           </button>
 
@@ -1021,8 +1398,14 @@ function Dashboard({
       </div>
 
       <div className="heroMark">
-        ARS<br/>
-        <b>SPORT</b>
+
+        ARS
+        <br/>
+
+        <b>
+          SPORT
+        </b>
+
       </div>
 
     </div>
@@ -1030,12 +1413,14 @@ function Dashboard({
     <div className="grid metrics">
 
       {cards.map(x=>
+
         <Metric
           key={x[0]}
           label={x[0]}
           value={x[1]}
           unit={x[2]}
         />
+
       )}
 
     </div>
@@ -1044,17 +1429,16 @@ function Dashboard({
 
       <Section
         title="Perfil ARSPORT"
-        sub="Resultado de la evaluación actual"
+        sub="Puntuaciones registradas"
       >
-        <Profile
-          d={d}
-          c={c}
-        />
+
+        <Profile d={d}/>
+
       </Section>
 
       <Section
         title="Resumen de registro"
-        sub="Datos guardados localmente"
+        sub="Información actual"
       >
 
         <div className="summary">
@@ -1065,12 +1449,8 @@ function Dashboard({
           />
 
           <Metric
-            label="Última fecha"
-            value={
-              history.length
-                ?history[history.length-1].date
-                :'—'
-            }
+            label="Fecha"
+            value={d.date||'—'}
           />
 
           <Metric
@@ -1089,25 +1469,60 @@ function Dashboard({
 
     </div>
 
-    <Section title="Acciones rápidas">
+    <Section
+      title="Acciones rápidas"
+    >
 
       <div className="actiongrid">
 
         {[
-          ['f2','Antropometría','Composición corporal y nutrición'],
-          ['f3','Movilidad','Flexibilidad y control'],
-          ['f4','Fuerza y potencia','1RM · VMP/VBT · MyJump'],
-          ['f5','Velocidad','Metric Sprint 5/10/20 m'],
-          ['f6','Agilidad','Photo Finish · cambio de dirección'],
-          ['f7','Resistencia','Tests aeróbicos y FC']
+          [
+            'f2',
+            'Antropometría',
+            'Composición corporal y nutrición'
+          ],
+          [
+            'f3',
+            'Movilidad',
+            'Flexibilidad y control'
+          ],
+          [
+            'f4',
+            'Fuerza y potencia',
+            '1RM · VMP/VBT · MyJump'
+          ],
+          [
+            'f5',
+            'Velocidad',
+            'Metric Sprint 5/10/20 m'
+          ],
+          [
+            'f6',
+            'Agilidad',
+            'Photo Finish · cambio de dirección'
+          ],
+          [
+            'f7',
+            'Resistencia',
+            'Tests aeróbicos y FC'
+          ]
         ].map(x=>
 
           <button
             key={x[0]}
-            onClick={()=>go(x[0])}
+            onClick={()=>
+              go(x[0])
+            }
           >
-            <b>{x[1]}</b>
-            <span>{x[2]}</span>
+
+            <b>
+              {x[1]}
+            </b>
+
+            <span>
+              {x[2]}
+            </span>
+
           </button>
 
         )}
@@ -1123,7 +1538,7 @@ function Dashboard({
    PERFIL
    ========================================================= */
 
-function Profile({d,c}){
+function Profile({d}){
 
   const vals=[
     ['Fuerza',d.strengthScore],
@@ -1138,28 +1553,34 @@ function Profile({d,c}){
 
     <div className="profile">
 
-      {vals.map(([k,v])=>
+      {vals.map(
+        ([k,v])=>
 
-        <div key={k}>
+          <div key={k}>
 
-          <span>{k}</span>
+            <span>
+              {k}
+            </span>
 
-          <div className="bar">
+            <div className="bar">
 
-            <i
-              style={{
-                width:`${Math.min(
-                  100,
-                  n(v)||0
-                )}%`
-              }}
-            />
+              <i
+                style={{
+                  width:
+                    `${Math.min(
+                      100,
+                      n(v)||0
+                    )}%`
+                }}
+              />
+
+            </div>
+
+            <b>
+              {v||'—'}
+            </b>
 
           </div>
-
-          <b>{v||'—'}</b>
-
-        </div>
 
       )}
 
@@ -1172,226 +1593,755 @@ function Profile({d,c}){
    FICHA 01
    ========================================================= */
 
-function Ficha01({d,set}){
+function Ficha01({
+  d,
+  set,
+  go
+}){
+
+  const updateBirth=v=>{
+
+    set(
+      'birthDate',
+      v
+    );
+
+    set(
+      'age',
+      ageFromBirthDate(
+        v,
+        d.date
+      )
+    );
+
+  };
+
+  const updateDate=v=>{
+
+    set(
+      'date',
+      v
+    );
+
+    if(d.birthDate){
+
+      set(
+        'age',
+        ageFromBirthDate(
+          d.birthDate,
+          v
+        )
+      );
+
+    }
+
+  };
 
   return <>
 
-    <Section title="1. IDENTIFICACIÓN">
+    <Section
+      title="1. IDENTIFICACIÓN"
+      sub="Ficha maestra. Estos datos alimentan automáticamente las Fichas 02–08."
+    >
 
       <div className="fields">
 
         <Input
-          label="ID evaluación"
+          label="ID automático"
           value={d.id}
-          onChange={v=>set('id',v)}
+          onChange={()=>{}}
+          readOnly
         />
 
         <Input
           label="Nombre completo"
           value={d.name}
-          onChange={v=>set('name',v)}
+          onChange={v=>
+            set('name',v)
+          }
         />
 
         <Input
-          label="Fecha"
+          label="Fecha de evaluación"
           value={d.date}
-          onChange={v=>set('date',v)}
+          onChange={updateDate}
           type="date"
         />
 
         <Input
-          label="Edad"
+          label="Fecha de nacimiento"
+          value={d.birthDate}
+          onChange={updateBirth}
+          type="date"
+        />
+
+        <Input
+          label="Edad automática"
           value={d.age}
-          onChange={v=>set('age',v)}
+          onChange={()=>{}}
+          type="number"
+          readOnly
         />
 
         <Select
           label="Sexo"
           value={d.sex}
-          onChange={v=>set('sex',v)}
+          onChange={v=>
+            set('sex',v)
+          }
         >
+
           <option value="">
-            Seleccionar
+            Seleccionar ▾
           </option>
+
           <option value="M">
             Masculino
           </option>
+
           <option value="F">
             Femenino
           </option>
+
+        </Select>
+
+        <Select
+          label="Deporte"
+          value={d.sport}
+          onChange={v=>
+            set('sport',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Fútbol
+          </option>
+
+          <option>
+            Futsal
+          </option>
+
+          <option>
+            Voleibol
+          </option>
+
+          <option>
+            Básquetbol
+          </option>
+
+          <option>
+            Atletismo
+          </option>
+
+          <option>
+            Natación
+          </option>
+
+          <option>
+            Otro
+          </option>
+
+        </Select>
+
+        <Select
+          label="Categoría"
+          value={d.category}
+          onChange={v=>
+            set('category',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Sub 8
+          </option>
+
+          <option>
+            Sub 10
+          </option>
+
+          <option>
+            Sub 12
+          </option>
+
+          <option>
+            Sub 14
+          </option>
+
+          <option>
+            Sub 16
+          </option>
+
+          <option>
+            Sub 18
+          </option>
+
+          <option>
+            Adulto
+          </option>
+
+          <option>
+            Senior
+          </option>
+
+          <option>
+            Libre
+          </option>
+
         </Select>
 
         <Input
-          label="Deporte"
-          value={d.sport}
-          onChange={v=>set('sport',v)}
-        />
-
-        <Input
-          label="Categoría"
-          value={d.category}
-          onChange={v=>set('category',v)}
-        />
-
-        <Input
-          label="Evaluador"
+          label="Evaluador / entrenador"
           value={d.trainer}
-          onChange={v=>set('trainer',v)}
+          onChange={v=>
+            set('trainer',v)
+          }
         />
+
+      </div>
+
+      <div className="note">
+
+        🔗 Los datos principales quedan vinculados
+        automáticamente a las demás fichas.
 
       </div>
 
     </Section>
 
-    <Section title="2. ANTECEDENTES RELEVANTES">
+    <Section
+      title="2. ANTECEDENTES RELEVANTES"
+      defaultOpen={false}
+    >
 
       <div className="fields">
-
-        <Input
-          label="Lesiones previas"
-          value={d.injuries}
-          onChange={v=>set('injuries',v)}
-        />
-
-        <Input
-          label="Cirugías / intervenciones"
-          value={d.surgeries}
-          onChange={v=>set('surgeries',v)}
-        />
-
-        <Input
-          label="Alergias"
-          value={d.allergies}
-          onChange={v=>set('allergies',v)}
-        />
-
-        <Input
-          label="Medicamentos"
-          value={d.meds}
-          onChange={v=>set('meds',v)}
-        />
-
-      </div>
-
-      <textarea
-        placeholder="Observaciones relevantes"
-        value={d.background}
-        onChange={e=>
-          set('background',e.target.value)
-        }
-      />
-
-    </Section>
-
-    <Section title="3. HÁBITOS Y ESTILO DE VIDA">
-
-      <div className="fields">
-
-        <Input
-          label="Sueño (h)"
-          value={d.sleep}
-          onChange={v=>set('sleep',v)}
-        />
-
-        <Input
-          label="Calidad sueño"
-          value={d.sleepQuality}
-          onChange={v=>set('sleepQuality',v)}
-        />
-
-        <Input
-          label="Hidratación"
-          value={d.hydration}
-          onChange={v=>set('hydration',v)}
-        />
-
-        <Input
-          label="Alimentación"
-          value={d.food}
-          onChange={v=>set('food',v)}
-        />
-
-        <Input
-          label="Comidas/día"
-          value={d.meals}
-          onChange={v=>set('meals',v)}
-        />
-
-        <Input
-          label="Estrés"
-          value={d.stress}
-          onChange={v=>set('stress',v)}
-        />
-
-        <Input
-          label="Pantallas h/día"
-          value={d.screens}
-          onChange={v=>set('screens',v)}
-        />
-
-        <Input
-          label="Actividad extra"
-          value={d.extra}
-          onChange={v=>set('extra',v)}
-        />
-
-        <Input
-          label="Recuperación"
-          value={d.recovery}
-          onChange={v=>set('recovery',v)}
-        />
-
-      </div>
-
-    </Section>
-
-    <Section title="4. OBJETIVOS">
-
-      <div className="fields">
-
-        <Input
-          label="Objetivo principal"
-          value={d.objective}
-          onChange={v=>set('objective',v)}
-        />
 
         <Select
-          label="Plazo"
-          value={d.term}
-          onChange={v=>set('term',v)}
+          label="Lesiones previas"
+          value={d.injuries}
+          onChange={v=>
+            set('injuries',v)
+          }
         >
-          <option>1 mes</option>
-          <option>3 meses</option>
-          <option>6 meses</option>
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Ninguna
+          </option>
+
+          <option>
+            Leve
+          </option>
+
+          <option>
+            Moderada
+          </option>
+
+          <option>
+            Importante
+          </option>
+
+        </Select>
+
+        <Select
+          label="Cirugías / intervenciones"
+          value={d.surgeries}
+          onChange={v=>
+            set('surgeries',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Ninguna
+          </option>
+
+          <option>
+            Sí
+          </option>
+
+        </Select>
+
+        <Select
+          label="Alergias"
+          value={d.allergies}
+          onChange={v=>
+            set('allergies',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Ninguna conocida
+          </option>
+
+          <option>
+            Sí
+          </option>
+
+        </Select>
+
+        <Select
+          label="Medicamentos"
+          value={d.meds}
+          onChange={v=>
+            set('meds',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Ninguno
+          </option>
+
+          <option>
+            Sí
+          </option>
+
+        </Select>
+
+        <Textarea
+          label="Detalle / observaciones"
+          value={d.background}
+          onChange={v=>
+            set('background',v)
+          }
+          placeholder="Especificar cuando corresponda..."
+        />
+
+      </div>
+
+    </Section>
+
+    <Section
+      title="3. HÁBITOS Y ESTILO DE VIDA"
+    >
+
+      <div className="fields">
+
+        <Select
+          label="Sueño habitual"
+          value={d.sleep}
+          onChange={v=>
+            set('sleep',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            &lt; 6 h
+          </option>
+
+          <option>
+            6–7 h
+          </option>
+
+          <option>
+            7–8 h
+          </option>
+
+          <option>
+            8–9 h
+          </option>
+
+          <option>
+            &gt; 9 h
+          </option>
+
+        </Select>
+
+        <Select
+          label="Calidad del sueño"
+          value={d.sleepQuality}
+          onChange={v=>
+            set('sleepQuality',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Muy buena
+          </option>
+
+          <option>
+            Buena
+          </option>
+
+          <option>
+            Regular
+          </option>
+
+          <option>
+            Mala
+          </option>
+
+        </Select>
+
+        <Select
+          label="Hidratación habitual"
+          value={d.hydration}
+          onChange={v=>
+            set('hydration',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Baja
+          </option>
+
+          <option>
+            Adecuada
+          </option>
+
+          <option>
+            Alta
+          </option>
+
+        </Select>
+
+        <Select
+          label="Calidad de alimentación"
+          value={d.food}
+          onChange={v=>
+            set('food',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Muy buena
+          </option>
+
+          <option>
+            Buena
+          </option>
+
+          <option>
+            Regular
+          </option>
+
+          <option>
+            Mala
+          </option>
+
+        </Select>
+
+        <Select
+          label="Comidas principales / día"
+          value={d.meals}
+          onChange={v=>
+            set('meals',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            1–2
+          </option>
+
+          <option>
+            3
+          </option>
+
+          <option>
+            4
+          </option>
+
+          <option>
+            5+
+          </option>
+
+        </Select>
+
+        <Select
+          label="Nivel de estrés"
+          value={d.stress}
+          onChange={v=>
+            set('stress',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Bajo
+          </option>
+
+          <option>
+            Moderado
+          </option>
+
+          <option>
+            Alto
+          </option>
+
+        </Select>
+
+        <Select
+          label="Pantallas / sedentarismo"
+          value={d.screens}
+          onChange={v=>
+            set('screens',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            &lt; 2 h
+          </option>
+
+          <option>
+            2–4 h
+          </option>
+
+          <option>
+            4–6 h
+          </option>
+
+          <option>
+            &gt; 6 h
+          </option>
+
+        </Select>
+
+        <Select
+          label="Actividad física adicional"
+          value={d.extra}
+          onChange={v=>
+            set('extra',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Ninguna
+          </option>
+
+          <option>
+            1–2 días/semana
+          </option>
+
+          <option>
+            3–4 días/semana
+          </option>
+
+          <option>
+            5+ días/semana
+          </option>
+
+        </Select>
+
+        <Select
+          label="Percepción de recuperación"
+          value={d.recovery}
+          onChange={v=>
+            set('recovery',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Muy buena
+          </option>
+
+          <option>
+            Buena
+          </option>
+
+          <option>
+            Regular
+          </option>
+
+          <option>
+            Mala
+          </option>
+
+        </Select>
+
+      </div>
+
+    </Section>
+
+    <Section
+      title="4. OBJETIVOS"
+    >
+
+      <div className="fields">
+
+        <Select
+          label="Objetivo principal"
+          value={d.objective}
+          onChange={v=>
+            set('objective',v)
+          }
+        >
+
+          <option value="">
+            Seleccionar ▾
+          </option>
+
+          <option>
+            Mejorar rendimiento
+          </option>
+
+          <option>
+            Aumentar fuerza
+          </option>
+
+          <option>
+            Aumentar potencia
+          </option>
+
+          <option>
+            Mejorar velocidad
+          </option>
+
+          <option>
+            Mejorar agilidad
+          </option>
+
+          <option>
+            Mejorar resistencia
+          </option>
+
+          <option>
+            Mejorar movilidad
+          </option>
+
+          <option>
+            Reducir grasa corporal
+          </option>
+
+          <option>
+            Aumentar masa muscular
+          </option>
+
+          <option>
+            Retorno al entrenamiento
+          </option>
+
+          <option>
+            Otro
+          </option>
+
+        </Select>
+
+        <Select
+          label="Plazo del objetivo"
+          value={d.term}
+          onChange={v=>
+            set('term',v)
+          }
+        >
+
+          <option>
+            1 mes
+          </option>
+
+          <option>
+            3 meses
+          </option>
+
+          <option>
+            6 meses
+          </option>
+
         </Select>
 
         <Input
           label="Objetivo específico 1"
           value={d.specific1}
-          onChange={v=>set('specific1',v)}
+          onChange={v=>
+            set('specific1',v)
+          }
         />
 
         <Input
           label="Objetivo específico 2"
           value={d.specific2}
-          onChange={v=>set('specific2',v)}
+          onChange={v=>
+            set('specific2',v)
+          }
         />
 
       </div>
 
     </Section>
 
-    <Section title="5. OBSERVACIONES DEL ENTRENADOR">
+    <Section
+      title="5. OBSERVACIONES DEL ENTRENADOR"
+      defaultOpen={false}
+    >
 
-      <textarea
+      <Textarea
+        label="Observaciones"
         value={d.trainerObs}
-        onChange={e=>
-          set('trainerObs',e.target.value)
+        onChange={v=>
+          set('trainerObs',v)
         }
-        placeholder="Notas del evaluador..."
+        placeholder="Notas iniciales del evaluador..."
       />
 
     </Section>
+
+    <div className="nextbar">
+
+      <button
+        className="primary"
+        onClick={()=>
+          go('f2')
+        }
+      >
+        Guardar datos maestros y continuar a Ficha 02 →
+      </button>
+
+    </div>
 
   </>;
 }
@@ -1400,7 +2350,11 @@ function Ficha01({d,set}){
    FICHA 02
    ========================================================= */
 
-function Ficha02({d,c,set}){
+function Ficha02({
+  d,
+  c,
+  set
+}){
 
   return <>
 
@@ -1414,27 +2368,35 @@ function Ficha02({d,c,set}){
       <div className="fields">
 
         <Input
-          label="Peso"
+          label="Peso (kg)"
           value={d.weight}
-          onChange={v=>set('weight',v)}
+          onChange={v=>
+            set('weight',v)
+          }
         />
 
         <Input
-          label="Talla"
+          label="Talla (cm)"
           value={d.height}
-          onChange={v=>set('height',v)}
+          onChange={v=>
+            set('height',v)
+          }
         />
 
         <Input
           label="% grasa"
           value={d.fat}
-          onChange={v=>set('fat',v)}
+          onChange={v=>
+            set('fat',v)
+          }
         />
 
         <Input
-          label="Masa muscular estimada"
+          label="Masa muscular estimada (kg)"
           value={d.muscle}
-          onChange={v=>set('muscle',v)}
+          onChange={v=>
+            set('muscle',v)
+          }
         />
 
       </div>
@@ -1460,51 +2422,59 @@ function Ficha02({d,c,set}){
         />
 
         <Metric
-          label="% masa muscular"
-          value={
-            d.muscle&&d.weight
-              ?n(d.muscle)/n(d.weight)*100
-              :''
-          }
-          unit="%"
+          label="Hidratación estimada"
+          value={c.hydration}
+          unit="L/día"
         />
 
       </div>
 
     </Section>
 
-    <Section title="2. PERÍMETROS ESENCIALES">
+    <Section
+      title="2. PERÍMETROS ESENCIALES"
+    >
 
       <div className="fields">
 
         <Input
           label="Cintura (cm)"
           value={d.waist}
-          onChange={v=>set('waist',v)}
+          onChange={v=>
+            set('waist',v)
+          }
         />
 
         <Input
           label="Cadera (cm)"
           value={d.hip}
-          onChange={v=>set('hip',v)}
+          onChange={v=>
+            set('hip',v)
+          }
         />
 
         <Input
           label="Brazo relajado (cm)"
           value={d.arm}
-          onChange={v=>set('arm',v)}
+          onChange={v=>
+            set('arm',v)
+          }
         />
 
         <Input
           label="Muslo medio (cm)"
           value={d.thigh}
-          onChange={v=>set('thigh',v)}
+          onChange={v=>
+            set('thigh',v)
+          }
         />
 
         <Input
           label="Pantorrilla máxima (cm)"
           value={d.calf}
-          onChange={v=>set('calf',v)}
+          onChange={v=>
+            set('calf',v)
+          }
         />
 
       </div>
@@ -1540,16 +2510,26 @@ function Ficha02({d,c,set}){
             </td>
 
             <CellInput
-              v={d[`sk${i}a`]||''}
+              v={
+                d[`sk${i}a`]||''
+              }
               set={v=>
-                set(`sk${i}a`,v)
+                set(
+                  `sk${i}a`,
+                  v
+                )
               }
             />
 
             <CellInput
-              v={d[`sk${i}b`]||''}
+              v={
+                d[`sk${i}b`]||''
+              }
               set={v=>
-                set(`sk${i}b`,v)
+                set(
+                  `sk${i}b`,
+                  v
+                )
               }
             />
 
@@ -1573,13 +2553,15 @@ function Ficha02({d,c,set}){
         Hombres: Durnin & Womersley,
         4 sitios. Mujeres: Jackson-Pollock/Ward,
         3 sitios. El % de grasa queda editable
-        para conservar la medición/protocolo utilizado.
+        para conservar el protocolo aplicado.
 
       </div>
 
     </Section>
 
-    <Section title="4. METABOLISMO Y REQUERIMIENTO">
+    <Section
+      title="4. METABOLISMO Y REQUERIMIENTO"
+    >
 
       <div className="grid metrics">
 
@@ -1608,37 +2590,48 @@ function Ficha02({d,c,set}){
         <Input
           label="Calorías objetivo"
           value={d.calTarget}
-          onChange={v=>set('calTarget',v)}
+          onChange={v=>
+            set('calTarget',v)
+          }
         />
 
         <Input
           label="Proteína (g/kg)"
           value={d.protein}
-          onChange={v=>set('protein',v)}
+          onChange={v=>
+            set('protein',v)
+          }
         />
 
         <Input
           label="Carbohidratos (g/kg)"
           value={d.carbs}
-          onChange={v=>set('carbs',v)}
+          onChange={v=>
+            set('carbs',v)
+          }
         />
 
         <Input
           label="Grasas (g/kg)"
           value={d.fats}
-          onChange={v=>set('fats',v)}
+          onChange={v=>
+            set('fats',v)
+          }
         />
 
       </div>
 
     </Section>
 
-    <Section title="5. NUTRICIÓN DEPORTIVA">
+    <Section
+      title="5. NUTRICIÓN DEPORTIVA"
+    >
 
-      <textarea
+      <Textarea
+        label="Recomendaciones"
         value={d.nutrition}
-        onChange={e=>
-          set('nutrition',e.target.value)
+        onChange={v=>
+          set('nutrition',v)
         }
         placeholder="Recomendaciones individualizadas..."
       />
@@ -1652,22 +2645,57 @@ function Ficha02({d,c,set}){
    FICHA 03
    ========================================================= */
 
-function Ficha03({d,c,set}){
+function Ficha03({
+  d,
+  set
+}){
 
   const mob=[
-    ['Tobillo – rodilla a la pared','ankleD','ankleI','cm'],
-    ['Cadera – flexión','hipFlexD','hipFlexI','°'],
-    ['Cadera – rotación interna','hipRotInD','hipRotInI','°'],
-    ['Cadera – rotación externa','hipRotOutD','hipRotOutI','°'],
-    ['Hombro – rotación externa','shoulderOutD','shoulderOutI','°'],
-    ['Hombro – rotación interna','shoulderInD','shoulderInI','nivel']
+    [
+      'Tobillo – rodilla a la pared',
+      'ankleD',
+      'ankleI',
+      'cm'
+    ],
+    [
+      'Cadera – flexión',
+      'hipFlexD',
+      'hipFlexI',
+      '°'
+    ],
+    [
+      'Cadera – rotación interna',
+      'hipRotInD',
+      'hipRotInI',
+      '°'
+    ],
+    [
+      'Cadera – rotación externa',
+      'hipRotOutD',
+      'hipRotOutI',
+      '°'
+    ],
+    [
+      'Hombro – rotación externa',
+      'shoulderOutD',
+      'shoulderOutI',
+      '°'
+    ],
+    [
+      'Hombro – rotación interna',
+      'shoulderInD',
+      'shoulderInI',
+      '°'
+    ]
   ];
 
   return <>
 
     <LinkedAthlete d={d}/>
 
-    <Section title="1. MOVILIDAD ARTICULAR">
+    <Section
+      title="1. MOVILIDAD ARTICULAR"
+    >
 
       <Table
         headers={[
@@ -1689,12 +2717,16 @@ function Ficha03({d,c,set}){
 
             <CellInput
               v={d[x[1]]}
-              set={v=>set(x[1],v)}
+              set={v=>
+                set(x[1],v)
+              }
             />
 
             <CellInput
               v={d[x[2]]}
-              set={v=>set(x[2],v)}
+              set={v=>
+                set(x[2],v)
+              }
             />
 
             <td>
@@ -1711,7 +2743,9 @@ function Ficha03({d,c,set}){
               }
             </td>
 
-            <td>{x[3]}</td>
+            <td>
+              {x[3]}
+            </td>
 
           </tr>
 
@@ -1721,39 +2755,51 @@ function Ficha03({d,c,set}){
 
     </Section>
 
-    <Section title="2. FLEXIBILIDAD">
+    <Section
+      title="2. FLEXIBILIDAD"
+    >
 
       <div className="fields">
 
         <Input
           label="Sit & Reach (cm)"
           value={d.sitReach}
-          onChange={v=>set('sitReach',v)}
+          onChange={v=>
+            set('sitReach',v)
+          }
         />
 
         <Input
           label="Test de Ely"
           value={d.ely}
-          onChange={v=>set('ely',v)}
+          onChange={v=>
+            set('ely',v)
+          }
         />
 
         <Input
           label="Aductores (°)"
           value={d.adductors}
-          onChange={v=>set('adductors',v)}
+          onChange={v=>
+            set('adductors',v)
+          }
         />
 
         <Input
           label="Pectoral (cm)"
           value={d.pectoral}
-          onChange={v=>set('pectoral',v)}
+          onChange={v=>
+            set('pectoral',v)
+          }
         />
 
       </div>
 
     </Section>
 
-    <Section title="3. CONTROL DEL MOVIMIENTO">
+    <Section
+      title="3. CONTROL DEL MOVIMIENTO"
+    >
 
       <Table
         headers={[
@@ -1765,62 +2811,103 @@ function Ficha03({d,c,set}){
       >
 
         <tr>
-          <td>Deep Squat</td>
+
+          <td>
+            Deep Squat
+          </td>
 
           <CellInput
             v={d.deepSquat}
-            set={v=>set('deepSquat',v)}
+            set={v=>
+              set(
+                'deepSquat',
+                v
+              )
+            }
           />
 
-          <td>0–3</td>
+          <td>
+            0–3
+          </td>
 
           <td>
             {level3(d.deepSquat)}
           </td>
+
         </tr>
 
         <tr>
-          <td>In-Line Lunge</td>
+
+          <td>
+            In-Line Lunge
+          </td>
 
           <CellInput
             v={d.lunge}
-            set={v=>set('lunge',v)}
+            set={v=>
+              set(
+                'lunge',
+                v
+              )
+            }
           />
 
-          <td>0–3</td>
+          <td>
+            0–3
+          </td>
 
           <td>
             {level3(d.lunge)}
           </td>
+
         </tr>
 
         <tr>
-          <td>Plancha frontal</td>
+
+          <td>
+            Plancha frontal
+          </td>
 
           <CellInput
             v={d.plank}
-            set={v=>set('plank',v)}
+            set={v=>
+              set(
+                'plank',
+                v
+              )
+            }
           />
 
-          <td>seg</td>
+          <td>
+            seg
+          </td>
 
           <td>
-            {n(d.plank)
-              ?'Registrado'
-              :'—'}
+            {
+              n(d.plank)
+                ?'Registrado'
+                :'—'
+            }
           </td>
+
         </tr>
 
       </Table>
 
     </Section>
 
-    <Section title="4. CONCLUSIÓN FUNCIONAL">
+    <Section
+      title="4. CONCLUSIÓN FUNCIONAL"
+    >
 
-      <textarea
+      <Textarea
+        label="Conclusión"
         value={d.mobilityObs}
-        onChange={e=>
-          set('mobilityObs',e.target.value)
+        onChange={v=>
+          set(
+            'mobilityObs',
+            v
+          )
         }
         placeholder="Interpretación funcional y prioridades..."
       />
@@ -1847,7 +2934,11 @@ function level3(v){
    FICHA 04
    ========================================================= */
 
-function Ficha04({d,c,set}){
+function Ficha04({
+  d,
+  c,
+  set
+}){
 
   const ex=[
     ['Sentadilla','sq1rm'],
@@ -1858,10 +2949,10 @@ function Ficha04({d,c,set}){
   ];
 
   const vb=[
-    ['Sentadilla','vbtSq'],
-    ['Press banca','vbtBench'],
-    ['Peso muerto','vbtDead'],
-    ['Press militar','vbtOHP']
+    ['Sentadilla','vbtSq','sq'],
+    ['Press banca','vbtBench','bench'],
+    ['Peso muerto','vbtDead','dead'],
+    ['Press militar','vbtOHP','ohp']
   ];
 
   const jumps=[
@@ -1877,7 +2968,9 @@ function Ficha04({d,c,set}){
 
     <LinkedAthlete d={d}/>
 
-    <Section title="1. FUERZA MÁXIMA · 1RM">
+    <Section
+      title="1. FUERZA MÁXIMA · 1RM"
+    >
 
       <Table
         headers={[
@@ -1898,12 +2991,18 @@ function Ficha04({d,c,set}){
 
             <CellInput
               v={d[x[1]]}
-              set={v=>set(x[1],v)}
+              set={v=>
+                set(
+                  x[1],
+                  v
+                )
+              }
             />
 
             <td>
               {
-                d.weight&&d[x[1]]
+                d.weight&&
+                d[x[1]]
                   ?(
                     n(d[x[1]])/
                     n(d.weight)*100
@@ -1912,7 +3011,9 @@ function Ficha04({d,c,set}){
               }
             </td>
 
-            <td>—</td>
+            <td>
+              —
+            </td>
 
           </tr>
 
@@ -1940,58 +3041,52 @@ function Ficha04({d,c,set}){
         ]}
       >
 
-        {vb.map(x=>{
-
-          const k=x[1];
-
-          const a=[
-            `${k}1`,
-            `${k}2`,
-            `${k}3`
-          ];
-
-          const key=
-            k==='vbtSq'
-              ?'sq'
-              :k==='vbtBench'
-                ?'bench'
-                :k==='vbtDead'
-                  ?'dead'
-                  :'ohp';
-
-          return(
+        {vb.map(
+          ([name,k,key])=>
 
             <tr key={k}>
 
               <td className="rowlabel">
-                {x[0]}
+                {name}
               </td>
 
               <CellInput
                 v={d[k+'Load']}
                 set={v=>
-                  set(k+'Load',v)
+                  set(
+                    k+'Load',
+                    v
+                  )
                 }
               />
 
               <CellInput
-                v={d[a[0]]}
+                v={d[k+'1']}
                 set={v=>
-                  set(a[0],v)
+                  set(
+                    k+'1',
+                    v
+                  )
                 }
               />
 
               <CellInput
-                v={d[a[1]]}
+                v={d[k+'2']}
                 set={v=>
-                  set(a[1],v)
+                  set(
+                    k+'2',
+                    v
+                  )
                 }
               />
 
               <CellInput
-                v={d[a[2]]}
+                v={d[k+'3']}
                 set={v=>
-                  set(a[2],v)
+                  set(
+                    k+'3',
+                    v
+                  )
                 }
               />
 
@@ -2014,36 +3109,23 @@ function Ficha04({d,c,set}){
               <td>
                 {
                   max(
-                    d[a[0]],
-                    d[a[1]],
-                    d[a[2]]
+                    d[k+'1'],
+                    d[k+'2'],
+                    d[k+'3']
                   )||'—'
                 }
               </td>
 
             </tr>
-
-          );
-
-        })}
+        )}
 
       </Table>
 
-      <div className="note">
-
-        Pérdida de velocidad =
-        (VMP inicial − VMP final) /
-        VMP inicial × 100.
-
-        VBT corresponde al método/tecnología
-        basada en velocidad y VMP a la velocidad
-        media propulsiva.
-
-      </div>
-
     </Section>
 
-    <Section title="3. SALTOS · MYJUMP">
+    <Section
+      title="3. SALTOS · MYJUMP"
+    >
 
       <Table
         headers={[
@@ -2067,9 +3149,16 @@ function Ficha04({d,c,set}){
 
               <CellInput
                 key={i}
-                v={d[x[1]+i]}
+                v={
+                  d[
+                    x[1]+i
+                  ]
+                }
                 set={v=>
-                  set(x[1]+i,v)
+                  set(
+                    x[1]+i,
+                    v
+                  )
                 }
               />
 
@@ -2087,7 +3176,9 @@ function Ficha04({d,c,set}){
 
     </Section>
 
-    <Section title="4. PERFIL NEUROMUSCULAR">
+    <Section
+      title="4. PERFIL NEUROMUSCULAR"
+    >
 
       <div className="grid metrics">
 
@@ -2119,7 +3210,9 @@ function Ficha04({d,c,set}){
 
     </Section>
 
-    <Section title="5. POTENCIA · TREN SUPERIOR">
+    <Section
+      title="5. POTENCIA · TREN SUPERIOR"
+    >
 
       <Table
         headers={[
@@ -2132,8 +3225,14 @@ function Ficha04({d,c,set}){
       >
 
         {[
-          ['Balón medicinal – pecho','medChest'],
-          ['Balón medicinal – detrás','medBehind']
+          [
+            'Balón medicinal – pecho',
+            'medChest'
+          ],
+          [
+            'Balón medicinal – detrás',
+            'medBehind'
+          ]
         ].map(x=>
 
           <tr key={x[1]}>
@@ -2146,9 +3245,16 @@ function Ficha04({d,c,set}){
 
               <CellInput
                 key={i}
-                v={d[x[1]+i]}
+                v={
+                  d[
+                    x[1]+i
+                  ]
+                }
                 set={v=>
-                  set(x[1]+i,v)
+                  set(
+                    x[1]+i,
+                    v
+                  )
                 }
               />
 
@@ -2179,7 +3285,12 @@ function Ficha04({d,c,set}){
    FICHA 05
    ========================================================= */
 
-function Ficha05({d,c,set}){
+function Ficha05({
+  d,
+  c,
+  set,
+  previous
+}){
 
   const rows=[
     ['5 m','s5'],
@@ -2219,9 +3330,16 @@ function Ficha05({d,c,set}){
 
               <CellInput
                 key={i}
-                v={d[x[1]+'_'+i]}
+                v={
+                  d[
+                    x[1]+'_'+i
+                  ]
+                }
                 set={v=>
-                  set(x[1]+'_'+i,v)
+                  set(
+                    x[1]+'_'+i,
+                    v
+                  )
                 }
               />
 
@@ -2234,10 +3352,16 @@ function Ficha05({d,c,set}){
             <td>
               {
                 c[
-                  x[1].replace('s','v')
+                  x[1].replace(
+                    's',
+                    'v'
+                  )
                 ]
                   ?c[
-                    x[1].replace('s','v')
+                    x[1].replace(
+                      's',
+                      'v'
+                    )
                    ].toFixed(2)
                   :'—'
               }
@@ -2251,7 +3375,9 @@ function Ficha05({d,c,set}){
 
     </Section>
 
-    <Section title="2. INDICADORES">
+    <Section
+      title="2. INDICADORES"
+    >
 
       <div className="grid metrics">
 
@@ -2277,22 +3403,20 @@ function Ficha05({d,c,set}){
 
     </Section>
 
-    <Section title="3. PROGRESIÓN">
+    <Section
+      title="3. PROGRESIÓN"
+    >
 
       <Table
         headers={[
           'Distancia',
           'Anterior',
           'Actual',
-          'Mejora %'
+          'Cambio %'
         ]}
       >
 
-        {[
-          ['5 m','s5'],
-          ['10 m','s10'],
-          ['20 m','s20']
-        ].map(x=>{
+        {rows.map(x=>{
 
           const p=
             previous?.calc?.[x[1]];
@@ -2305,7 +3429,9 @@ function Ficha05({d,c,set}){
                 {x[0]}
               </td>
 
-              <td>{p??'—'}</td>
+              <td>
+                {p??'—'}
+              </td>
 
               <td>
                 {c[x[1]]||'—'}
@@ -2315,8 +3441,8 @@ function Ficha05({d,c,set}){
                 {
                   p&&c[x[1]]
                     ?pct(
-                      p,
-                      c[x[1]]
+                      c[x[1]],
+                      p
                     ).toFixed(1)+'%'
                     :'—'
                 }
@@ -2332,7 +3458,9 @@ function Ficha05({d,c,set}){
 
     </Section>
 
-    <Section title="4. PERFIL">
+    <Section
+      title="4. PERFIL"
+    >
 
       <div className="fields">
 
@@ -2340,16 +3468,23 @@ function Ficha05({d,c,set}){
           label="Puntuación velocidad"
           value={d.speedScore}
           onChange={v=>
-            set('speedScore',v)
+            set(
+              'speedScore',
+              v
+            )
           }
         />
 
-        <textarea
+        <Textarea
+          label="Observaciones"
           value={d.speedObs}
-          onChange={e=>
-            set('speedObs',e.target.value)
+          onChange={v=>
+            set(
+              'speedObs',
+              v
+            )
           }
-          placeholder="Observaciones"
+          placeholder="Observaciones..."
         />
 
       </div>
@@ -2363,7 +3498,11 @@ function Ficha05({d,c,set}){
    FICHA 06
    ========================================================= */
 
-function Ficha06({d,c,set}){
+function Ficha06({
+  d,
+  c,
+  set
+}){
 
   const rows=[
     ['Derecha','changeD'],
@@ -2407,9 +3546,16 @@ function Ficha06({d,c,set}){
 
               <CellInput
                 key={i}
-                v={d[x[1]+i]}
+                v={
+                  d[
+                    x[1]+i
+                  ]
+                }
                 set={v=>
-                  set(x[1]+i,v)
+                  set(
+                    x[1]+i,
+                    v
+                  )
                 }
               />
 
@@ -2419,7 +3565,9 @@ function Ficha06({d,c,set}){
               {c[x[1]]||'—'}
             </td>
 
-            <td>—</td>
+            <td>
+              —
+            </td>
 
           </tr>
 
@@ -2429,7 +3577,9 @@ function Ficha06({d,c,set}){
 
     </Section>
 
-    <Section title="2. GIRO 180°">
+    <Section
+      title="2. GIRO 180°"
+    >
 
       <Table
         headers={[
@@ -2453,9 +3603,16 @@ function Ficha06({d,c,set}){
 
               <CellInput
                 key={i}
-                v={d[x[1]+i]}
+                v={
+                  d[
+                    x[1]+i
+                  ]
+                }
                 set={v=>
-                  set(x[1]+i,v)
+                  set(
+                    x[1]+i,
+                    v
+                  )
                 }
               />
 
@@ -2473,7 +3630,9 @@ function Ficha06({d,c,set}){
 
     </Section>
 
-    <Section title="3. ANÁLISIS">
+    <Section
+      title="3. ANÁLISIS"
+    >
 
       <div className="grid metrics">
 
@@ -2513,16 +3672,23 @@ function Ficha06({d,c,set}){
           label="Puntuación agilidad"
           value={d.agilityScore}
           onChange={v=>
-            set('agilityScore',v)
+            set(
+              'agilityScore',
+              v
+            )
           }
         />
 
-        <textarea
+        <Textarea
+          label="Observaciones"
           value={d.agilityObs}
-          onChange={e=>
-            set('agilityObs',e.target.value)
+          onChange={v=>
+            set(
+              'agilityObs',
+              v
+            )
           }
-          placeholder="Observaciones y prioridad de entrenamiento"
+          placeholder="Observaciones y prioridad..."
         />
 
       </div>
@@ -2536,13 +3702,19 @@ function Ficha06({d,c,set}){
    FICHA 07
    ========================================================= */
 
-function Ficha07({d,c,set}){
+function Ficha07({
+  d,
+  c,
+  set
+}){
 
   return <>
 
     <LinkedAthlete d={d}/>
 
-    <Section title="1. SELECCIÓN DEL TEST">
+    <Section
+      title="1. SELECCIÓN DEL TEST"
+    >
 
       <div className="fields">
 
@@ -2550,20 +3722,39 @@ function Ficha07({d,c,set}){
           label="Test aplicado"
           value={d.enduranceTest}
           onChange={v=>
-            set('enduranceTest',v)
+            set(
+              'enduranceTest',
+              v
+            )
           }
         >
-          <option>Yo-Yo IR1</option>
-          <option>30-15 IFT</option>
-          <option>Course Navette</option>
-          <option>Cooper 12 min</option>
+
+          <option>
+            Yo-Yo IR1
+          </option>
+
+          <option>
+            30-15 IFT
+          </option>
+
+          <option>
+            Course Navette
+          </option>
+
+          <option>
+            Cooper 12 min
+          </option>
+
         </Select>
 
         <Input
           label="Nivel alcanzado"
           value={d.endLevel}
           onChange={v=>
-            set('endLevel',v)
+            set(
+              'endLevel',
+              v
+            )
           }
         />
 
@@ -2571,7 +3762,10 @@ function Ficha07({d,c,set}){
           label="Distancia total (m)"
           value={d.endDistance}
           onChange={v=>
-            set('endDistance',v)
+            set(
+              'endDistance',
+              v
+            )
           }
         />
 
@@ -2579,7 +3773,10 @@ function Ficha07({d,c,set}){
           label="Velocidad final (km/h)"
           value={d.endSpeed}
           onChange={v=>
-            set('endSpeed',v)
+            set(
+              'endSpeed',
+              v
+            )
           }
         />
 
@@ -2587,7 +3784,10 @@ function Ficha07({d,c,set}){
           label="VO₂máx estimado"
           value={d.vo2}
           onChange={v=>
-            set('vo2',v)
+            set(
+              'vo2',
+              v
+            )
           }
         />
 
@@ -2595,7 +3795,9 @@ function Ficha07({d,c,set}){
 
     </Section>
 
-    <Section title="2. FRECUENCIA CARDÍACA Y RECUPERACIÓN">
+    <Section
+      title="2. FRECUENCIA CARDÍACA Y RECUPERACIÓN"
+    >
 
       <Table
         headers={[
@@ -2612,22 +3814,42 @@ function Ficha07({d,c,set}){
 
           <CellInput
             v={d.hrRest}
-            set={v=>set('hrRest',v)}
+            set={v=>
+              set(
+                'hrRest',
+                v
+              )
+            }
           />
 
           <CellInput
             v={d.hrPost}
-            set={v=>set('hrPost',v)}
+            set={v=>
+              set(
+                'hrPost',
+                v
+              )
+            }
           />
 
           <CellInput
             v={d.hr1}
-            set={v=>set('hr1',v)}
+            set={v=>
+              set(
+                'hr1',
+                v
+              )
+            }
           />
 
           <CellInput
             v={d.hr2}
-            set={v=>set('hr2',v)}
+            set={v=>
+              set(
+                'hr2',
+                v
+              )
+            }
           />
 
           <td>
@@ -2649,7 +3871,9 @@ function Ficha07({d,c,set}){
 
     </Section>
 
-    <Section title="3. PERFIL DE RESISTENCIA ARSPORT">
+    <Section
+      title="3. PERFIL DE RESISTENCIA ARSPORT"
+    >
 
       <div className="grid metrics">
 
@@ -2684,7 +3908,10 @@ function Ficha07({d,c,set}){
           label="Puntuación resistencia"
           value={d.enduranceScore}
           onChange={v=>
-            set('enduranceScore',v)
+            set(
+              'enduranceScore',
+              v
+            )
           }
         />
 
@@ -2692,16 +3919,23 @@ function Ficha07({d,c,set}){
           label="Tolerancia al esfuerzo"
           value={d.endTolerance}
           onChange={v=>
-            set('endTolerance',v)
+            set(
+              'endTolerance',
+              v
+            )
           }
         />
 
-        <textarea
+        <Textarea
+          label="Comentarios"
           value={d.endObs}
-          onChange={e=>
-            set('endObs',e.target.value)
+          onChange={v=>
+            set(
+              'endObs',
+              v
+            )
           }
-          placeholder="Comentarios del test"
+          placeholder="Comentarios del test..."
         />
 
       </div>
@@ -2723,26 +3957,28 @@ function Ficha08({
 }){
 
   const rows=[
-    ['Fuerza',d.strengthScore],
-    ['Potencia',d.powerScore],
-    ['Velocidad',d.speedScore],
-    ['Agilidad',d.agilityScore],
-    ['Resistencia',d.enduranceScore],
-    ['Movilidad',d.mobilityScore]
+    ['Fuerza','strengthScore'],
+    ['Potencia','powerScore'],
+    ['Velocidad','speedScore'],
+    ['Agilidad','agilityScore'],
+    ['Resistencia','enduranceScore'],
+    ['Movilidad','mobilityScore']
   ];
 
   return <>
 
     <Section
       title="1. IDENTIFICACIÓN"
-      sub="Datos vinculados automáticamente desde la Ficha 01."
+      sub="Datos vinculados automáticamente desde Ficha 01."
     >
 
       <LinkedAthlete d={d}/>
 
     </Section>
 
-    <Section title="2. RESULTADOS PRINCIPALES">
+    <Section
+      title="2. RESULTADOS PRINCIPALES"
+    >
 
       <Table
         headers={[
@@ -2754,28 +3990,54 @@ function Ficha08({
       >
 
         <tr>
-          <td>Fuerza – Sentadilla</td>
-          <td>{d.sq1rm||'—'}</td>
-          <td>kg</td>
-          <td>Fuerza máxima</td>
+          <td>
+            Fuerza – Sentadilla
+          </td>
+          <td>
+            {d.sq1rm||'—'}
+          </td>
+          <td>
+            kg
+          </td>
+          <td>
+            Fuerza máxima
+          </td>
         </tr>
 
         <tr>
-          <td>Potencia – CMJ</td>
-          <td>{c.cmj||'—'}</td>
-          <td>cm</td>
-          <td>Salto vertical</td>
+          <td>
+            Potencia – CMJ
+          </td>
+          <td>
+            {c.cmj||'—'}
+          </td>
+          <td>
+            cm
+          </td>
+          <td>
+            Salto vertical
+          </td>
         </tr>
 
         <tr>
-          <td>Velocidad – 20 m</td>
-          <td>{c.s20||'—'}</td>
-          <td>s</td>
-          <td>Sprint corto</td>
+          <td>
+            Velocidad – 20 m
+          </td>
+          <td>
+            {c.s20||'—'}
+          </td>
+          <td>
+            s
+          </td>
+          <td>
+            Sprint corto
+          </td>
         </tr>
 
         <tr>
-          <td>Agilidad – cambio D/I</td>
+          <td>
+            Agilidad – cambio D/I
+          </td>
           <td>
             {
               c.cD&&c.cI
@@ -2783,8 +4045,12 @@ function Ficha08({
                 :'—'
             }
           </td>
-          <td>s</td>
-          <td>Cambio de dirección</td>
+          <td>
+            s
+          </td>
+          <td>
+            Cambio de dirección
+          </td>
         </tr>
 
         <tr>
@@ -2794,15 +4060,21 @@ function Ficha08({
           <td>
             {d.endLevel||'—'}
           </td>
-          <td>nivel</td>
-          <td>Capacidad aeróbica</td>
+          <td>
+            nivel
+          </td>
+          <td>
+            Capacidad aeróbica
+          </td>
         </tr>
 
       </Table>
 
     </Section>
 
-    <Section title="3. PERFIL ARSPORT">
+    <Section
+      title="3. PERFIL ARSPORT"
+    >
 
       <Table
         headers={[
@@ -2813,44 +4085,40 @@ function Ficha08({
         ]}
       >
 
-        {rows.map(x=>{
+        {rows.map(
+          ([name,key])=>
 
-          const key=
-            x[0].toLowerCase()+
-            'Score';
-
-          return(
-
-            <tr key={x[0]}>
+            <tr key={key}>
 
               <td className="rowlabel">
-                {x[0]}
+                {name}
               </td>
 
               <CellInput
-                v={x[1]}
+                v={d[key]}
                 set={v=>
-                  set(key,v)
+                  set(
+                    key,
+                    v
+                  )
                 }
               />
 
               <td>
-                {scoreLevel(x[1])}
+                {scoreLevel(d[key])}
               </td>
 
               <td>
                 {
-                  scoreLevel(x[1])==='PRIORIDAD'
+                  scoreLevel(d[key])===
+                  'PRIORIDAD'
                     ?'Mejorar'
                     :'Mantener / desarrollar'
                 }
               </td>
 
             </tr>
-
-          );
-
-        })}
+        )}
 
       </Table>
 
@@ -2860,10 +4128,14 @@ function Ficha08({
       title="4. FORTALEZAS / 5. PRIORIDADES / 6. PLAN DE ACCIÓN"
     >
 
-      <textarea
+      <Textarea
+        label="Informe"
         value={d.reportNotes}
-        onChange={e=>
-          set('reportNotes',e.target.value)
+        onChange={v=>
+          set(
+            'reportNotes',
+            v
+          )
         }
         placeholder="Fortalezas, prioridades y acciones concretas..."
       />
@@ -2872,7 +4144,10 @@ function Ficha08({
         label="Plan de acción"
         value={d.actionPlan}
         onChange={v=>
-          set('actionPlan',v)
+          set(
+            'actionPlan',
+            v
+          )
         }
       />
 
@@ -2880,17 +4155,32 @@ function Ficha08({
         label="Plazo objetivo"
         value={d.term}
         onChange={v=>
-          set('term',v)
+          set(
+            'term',
+            v
+          )
         }
       >
-        <option>1 mes</option>
-        <option>3 meses</option>
-        <option>6 meses</option>
+
+        <option>
+          1 mes
+        </option>
+
+        <option>
+          3 meses
+        </option>
+
+        <option>
+          6 meses
+        </option>
+
       </Select>
 
     </Section>
 
-    <Section title="7. EVOLUCIÓN">
+    <Section
+      title="7. EVOLUCIÓN"
+    >
 
       <Table
         headers={[
@@ -2902,59 +4192,62 @@ function Ficha08({
         ]}
       >
 
-        {rows.map(x=>{
+        {rows.map(
+          ([name,key])=>{
 
-          const key=
-            x[0].toLowerCase()+
-            'Score';
+            const p=
+              previous?.[key];
 
-          const p=
-            previous?.[key];
+            const cur=
+              d[key];
 
-          return(
+            return(
 
-            <tr key={x[0]}>
+              <tr key={key}>
 
-              <td>{x[0]}</td>
+                <td>
+                  {name}
+                </td>
 
-              <td>
-                {p??'—'}
-              </td>
+                <td>
+                  {p??'—'}
+                </td>
 
-              <td>
-                {x[1]||'—'}
-              </td>
+                <td>
+                  {cur||'—'}
+                </td>
 
-              <td>
-                {
-                  p&&x[1]
-                    ?pct(
-                      x[1],
-                      p
-                    ).toFixed(1)+'%'
-                    :'—'
-                }
-              </td>
+                <td>
+                  {
+                    p&&cur
+                      ?pct(
+                        cur,
+                        p
+                      ).toFixed(1)+'%'
+                      :'—'
+                  }
+                </td>
 
-              <td>
-                {
-                  p&&x[1]
-                    ?(
-                      n(x[1])>n(p)
-                        ?'MEJORA'
-                        :n(x[1])<n(p)
-                          ?'REVISAR'
-                          :'ESTABLE'
-                     )
-                    :'—'
-                }
-              </td>
+                <td>
+                  {
+                    p&&cur
+                      ?(
+                        n(cur)>n(p)
+                          ?'MEJORA'
+                          :n(cur)<n(p)
+                            ?'REVISAR'
+                            :'ESTABLE'
+                       )
+                      :'—'
+                  }
+                </td>
 
-            </tr>
+              </tr>
 
-          );
+            );
 
-        })}
+          }
+        )}
 
       </Table>
 
@@ -2962,7 +4255,9 @@ function Ficha08({
 
     <div className="quote">
 
-      TU RESULTADO NO ES EL FINAL.<br/>
+      TU RESULTADO NO ES EL FINAL.
+
+      <br/>
 
       <b>
         ES EL PUNTO DE PARTIDA PARA MEJORAR.
@@ -2990,7 +4285,6 @@ function scoreLevel(v){
       :x>=70
         ?'ADECUADO'
         :'PRIORIDAD';
-
 }
 
 /* =========================================================
@@ -3006,7 +4300,7 @@ function History({
 
     <Section
       title="HISTORIAL DE EVALUACIONES"
-      sub="Cada guardado conserva una evaluación. Selecciona una fila para cargarla."
+      sub="Toca una fila para cargar esa evaluación."
     >
 
       <div className="toolbar">
@@ -3017,6 +4311,7 @@ function History({
 
         <button
           onClick={()=>{
+
             const b=
               new Blob(
                 [
@@ -3027,7 +4322,8 @@ function History({
                   )
                 ],
                 {
-                  type:'application/json'
+                  type:
+                    'application/json'
                 }
               );
 
@@ -3042,9 +4338,13 @@ function History({
 
             a.click();
 
+            URL.revokeObjectURL(
+              a.href
+            );
+
           }}
         >
-          Exportar respaldo JSON
+          Exportar JSON
         </button>
 
       </div>
@@ -3066,41 +4366,61 @@ function History({
         {history
           .slice()
           .reverse()
-          .map((x,i)=>
+          .map(
+            (x,i)=>
 
-            <tr
-              key={i}
-              onClick={()=>
-                setD({
-                  ...empty,
-                  ...x
-                })
-              }
-              className="clickrow"
-            >
-
-              <td>{x.date}</td>
-              <td>{x.id}</td>
-              <td>{x.name||'—'}</td>
-              <td>{x.sport||'—'}</td>
-              <td>{x.sq1rm||'—'}</td>
-              <td>{x.calc?.cmj||'—'}</td>
-              <td>{x.calc?.s20||'—'}</td>
-
-              <td>
-                {
-                  x.calc?.cAs
-                    ?x.calc.cAs.toFixed(1)+'%'
-                    :'—'
+              <tr
+                key={i}
+                onClick={()=>
+                  setD({
+                    ...empty,
+                    ...x
+                  })
                 }
-              </td>
+                className="clickrow"
+              >
 
-              <td>
-                {x.enduranceTest}
-              </td>
+                <td>
+                  {x.date}
+                </td>
 
-            </tr>
+                <td>
+                  {x.id}
+                </td>
 
+                <td>
+                  {x.name||'—'}
+                </td>
+
+                <td>
+                  {x.sport||'—'}
+                </td>
+
+                <td>
+                  {x.sq1rm||'—'}
+                </td>
+
+                <td>
+                  {x.calc?.cmj||'—'}
+                </td>
+
+                <td>
+                  {x.calc?.s20||'—'}
+                </td>
+
+                <td>
+                  {
+                    x.calc?.cAs
+                      ?x.calc.cAs.toFixed(1)+'%'
+                      :'—'
+                  }
+                </td>
+
+                <td>
+                  {x.enduranceTest}
+                </td>
+
+              </tr>
           )}
 
       </Table>
@@ -3121,12 +4441,36 @@ function Progress({
 }){
 
   const data=[
-    ['Fuerza',previous?.sq1rm,d.sq1rm],
-    ['Potencia',previous?.calc?.cmj,c.cmj],
-    ['Velocidad',previous?.calc?.s20,c.s20],
-    ['Agilidad',previous?.calc?.cD,c.cD],
-    ['Resistencia',previous?.vo2,d.vo2],
-    ['Movilidad',previous?.mobilityScore,d.mobilityScore]
+    [
+      'Fuerza',
+      previous?.sq1rm,
+      d.sq1rm
+    ],
+    [
+      'Potencia',
+      previous?.calc?.cmj,
+      c.cmj
+    ],
+    [
+      'Velocidad',
+      previous?.calc?.s20,
+      c.s20
+    ],
+    [
+      'Agilidad',
+      previous?.calc?.cD,
+      c.cD
+    ],
+    [
+      'Resistencia',
+      previous?.vo2,
+      d.vo2
+    ],
+    [
+      'Movilidad',
+      previous?.mobilityScore,
+      d.mobilityScore
+    ]
   ];
 
   return <>
@@ -3142,7 +4486,10 @@ function Progress({
 
           const ch=
             x[1]&&x[2]
-              ?pct(x[2],x[1])
+              ?pct(
+                x[2],
+                x[1]
+              )
               :null;
 
           return(
@@ -3152,7 +4499,9 @@ function Progress({
               key={x[0]}
             >
 
-              <span>{x[0]}</span>
+              <span>
+                {x[0]}
+              </span>
 
               <strong>
                 {x[2]||'—'}
@@ -3171,12 +4520,14 @@ function Progress({
                       :''
                 }
               >
+
                 {
                   ch===null
                     ?'—'
                     :(ch>0?'+':'')+
                      ch.toFixed(1)+'%'
                 }
+
               </b>
 
             </div>
@@ -3189,14 +4540,16 @@ function Progress({
 
     </Section>
 
-    <Section title="LECTURA">
+    <Section
+      title="LECTURA"
+    >
 
       <div className="note">
 
-        La dirección de mejora depende de la variable:
-        en fuerza, potencia y puntuaciones mayores
-        suele ser mejor; en tiempos de sprint y cambio
-        de dirección, menor tiempo es mejor.
+        En fuerza, potencia y puntuaciones
+        mayores suele ser mejor.
+        En tiempos de sprint y cambio de
+        dirección, menor tiempo es mejor.
 
       </div>
 
@@ -3211,91 +4564,92 @@ function Progress({
 
 function Guide(){
 
-  return <>
+  return(
 
-    <Section title="GUÍA DE USO · ARSPORT">
+    <Section
+      title="GUÍA DE USO · ARSPORT"
+    >
 
       <div className="guide">
 
-        <h4>Flujo recomendado</h4>
+        <h4>
+          Flujo recomendado
+        </h4>
 
         <ol>
 
           <li>
-            Crear una nueva evaluación
-            y completar Ficha 01.
+            Crear una nueva evaluación.
           </li>
 
           <li>
-            Registrar antropometría
-            en Ficha 02.
+            Completar Ficha 01.
           </li>
 
           <li>
-            Completar movilidad,
-            fuerza/potencia, velocidad,
-            agilidad y resistencia.
+            La Ficha 01 funciona como
+            ficha maestra.
+          </li>
+
+          <li>
+            Completar Fichas 02–07.
           </li>
 
           <li>
             Guardar la evaluación.
-            El historial conserva cada fecha.
           </li>
 
           <li>
-            Usar Progresión para comparar
-            y Ficha 08 para el informe.
+            Usar Progresión y Ficha 08.
           </li>
 
         </ol>
 
-        <h4>Reglas del sistema</h4>
+        <h4>
+          Reglas del sistema
+        </h4>
 
         <ul>
 
           <li>
-            Varios intentos: conservar todos
-            y usar el mejor cuando corresponda.
+            Varios intentos:
+            conservar todos y utilizar
+            el mejor cuando corresponda.
           </li>
 
           <li>
-            Asimetría bilateral:
+            Asimetría:
             |D−I| / Mayor × 100.
           </li>
 
           <li>
-            Deep Squat e In-Line Lunge:
-            escala interna 0–3.
+            Ficha 05:
+            únicamente 5, 10 y 20 metros.
           </li>
 
           <li>
-            No interpretar un valor aislado
-            como diagnóstico.
-          </li>
-
-          <li>
-            Si existe dolor o limitación importante,
-            derivar a profesional sanitario.
+            VMP =
+            velocidad media propulsiva.
           </li>
 
         </ul>
 
-        <h4>Compatibilidad</h4>
+        <h4>
+          Compatibilidad
+        </h4>
 
         <p>
-          Esta versión utiliza Next.js sin VBA,
-          macros ni dependencias externas de UI.
-          Los datos se conservan en el navegador
-          mediante localStorage y pueden respaldarse
-          en JSON. Está diseñada para iPad y escritorio.
+          Diseñado para iPad y escritorio.
+          Los datos se guardan localmente
+          en el navegador y pueden respaldarse
+          mediante JSON.
         </p>
 
       </div>
 
     </Section>
 
-  </>;
-
+  );
 }
 
 export default App;
