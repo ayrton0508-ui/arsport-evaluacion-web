@@ -2367,6 +2367,7 @@ function Ficha02({
   };
 
   const average = (...values) => {
+
     const a = values
       .map(num)
       .filter(v => v !== null);
@@ -2376,53 +2377,138 @@ function Ficha02({
       : null;
   };
 
+
   const weight = num(d.weight);
   const height = num(d.height);
   const age = num(d.age);
 
 
   /* =========================================================
-     PLIEGUES CUTÁNEOS
-     DOS MEDICIONES POR SITIO
+     FÓRMULA SELECCIONADA
+     ========================================================= */
+
+  const selectedMethod =
+    d.skinfoldFormula ||
+    (
+      d.sex === 'F'
+        ? 'JP3F'
+        : 'DW4'
+    );
+
+
+  /* =========================================================
+     SITIOS DE PLIEGUES SEGÚN FÓRMULA
+     ========================================================= */
+
+  const formulaSites = {
+
+    DW4: [
+      ['biceps','Bíceps'],
+      ['triceps','Tríceps'],
+      ['subscapular','Subescapular'],
+      ['suprailiac','Suprailiaco']
+    ],
+
+    JP3M: [
+      ['chest','Pecho'],
+      ['abdominal','Abdominal'],
+      ['thigh','Muslo anterior']
+    ],
+
+    JP7M: [
+      ['chest','Pecho'],
+      ['midaxillary','Axilar medio'],
+      ['triceps','Tríceps'],
+      ['subscapular','Subescapular'],
+      ['abdominal','Abdominal'],
+      ['suprailiac','Suprailiaco'],
+      ['thigh','Muslo anterior']
+    ],
+
+    JP3F: [
+      ['triceps','Tríceps'],
+      ['suprailiac','Suprailiaco'],
+      ['thigh','Muslo anterior']
+    ],
+
+    JP4F: [
+      ['triceps','Tríceps'],
+      ['suprailiac','Suprailiaco'],
+      ['abdominal','Abdominal'],
+      ['thigh','Muslo anterior']
+    ],
+
+    JP7F: [
+      ['chest','Pecho'],
+      ['midaxillary','Axilar medio'],
+      ['triceps','Tríceps'],
+      ['subscapular','Subescapular'],
+      ['abdominal','Abdominal'],
+      ['suprailiac','Suprailiaco'],
+      ['thigh','Muslo anterior']
+    ],
+
+    YUHAZ6: [
+      ['triceps','Tríceps'],
+      ['subscapular','Subescapular'],
+      ['suprailiac','Suprailiaco'],
+      ['abdominal','Abdominal'],
+      ['thigh','Muslo anterior'],
+      ['calf','Pantorrilla medial']
+    ]
+
+  };
+
+
+  const requiredSites =
+    formulaSites[selectedMethod] ||
+    formulaSites.DW4;
+
+
+  /* =========================================================
+     OBTENER PROMEDIO DE UN PLIEGUE
      ========================================================= */
 
   const skinfold = name => {
 
-    const a = num(d[`sk_${name}_1`]);
-    const b = num(d[`sk_${name}_2`]);
+    return average(
+      d[`sk_${name}_1`],
+      d[`sk_${name}_2`]
+    );
 
-    return average(a,b);
   };
 
-  const biceps = skinfold('biceps');
-  const triceps = skinfold('triceps');
-  const subscapular = skinfold('subscapular');
-  const suprailiac = skinfold('suprailiac');
 
-  const thighSF = skinfold('thigh');
-  const calfSF = skinfold('calf');
+  const biceps =
+    skinfold('biceps');
 
-  const chest = skinfold('chest');
-  const abdominal = skinfold('abdominal');
-  const midaxillarySF = skinfold('midaxillary');
+  const triceps =
+    skinfold('triceps');
+
+  const subscapular =
+    skinfold('subscapular');
+
+  const suprailiac =
+    skinfold('suprailiac');
+
+  const thighSF =
+    skinfold('thigh');
+
+  const calfSF =
+    skinfold('calf');
+
+  const chest =
+    skinfold('chest');
+
+  const abdominal =
+    skinfold('abdominal');
+
+  const midaxillarySF =
+    skinfold('midaxillary');
 
 
   /* =========================================================
-     MÉTODO DE % GRASA
-     ========================================================= */
-
-  const selectedMethod =
-    d.skinfoldFormula || 'DW4';
-
-
-  /* =========================================================
-     DURIN & WOMERSLEY
-     4 PLIEGUES
-     
-     Bíceps
-     Tríceps
-     Subescapular
-     Suprailiaco
+     DURIN & WOMERSLEY 4
      ========================================================= */
 
   const dwSum =
@@ -2440,14 +2526,18 @@ function Ficha02({
       :
         null;
 
+
   let dwDensity = null;
+
 
   if(
     dwSum !== null &&
     age !== null
   ){
 
-    const logS = Math.log10(dwSum);
+    const logS =
+      Math.log10(dwSum);
+
 
     if(d.sex === 'M'){
 
@@ -2536,16 +2626,12 @@ function Ficha02({
       }
 
     }
+
   }
 
 
   /* =========================================================
-     JACKSON-POLLOCK
-     3 PLIEGUES MASCULINO
-     
-     Pecho
-     Abdomen
-     Muslo
+     JACKSON-POLLOCK 3 MASCULINO
      ========================================================= */
 
   const jp3mSum =
@@ -2561,7 +2647,9 @@ function Ficha02({
       :
         null;
 
+
   let jp3mDensity = null;
+
 
   if(
     jp3mSum !== null &&
@@ -2579,8 +2667,7 @@ function Ficha02({
 
 
   /* =========================================================
-     JACKSON-POLLOCK
-     7 PLIEGUES MASCULINO
+     JACKSON-POLLOCK 7 MASCULINO
      ========================================================= */
 
   const jp7mSum =
@@ -2604,7 +2691,9 @@ function Ficha02({
       :
         null;
 
+
   let jp7mDensity = null;
+
 
   if(
     jp7mSum !== null &&
@@ -2622,12 +2711,7 @@ function Ficha02({
 
 
   /* =========================================================
-     JACKSON-POLLOCK / WARD
-     3 PLIEGUES FEMENINO
-     
-     Tríceps
-     Suprailiaco
-     Muslo
+     JACKSON-POLLOCK / WARD 3 FEMENINO
      ========================================================= */
 
   const jp3fSum =
@@ -2643,7 +2727,9 @@ function Ficha02({
       :
         null;
 
+
   let jp3fDensity = null;
+
 
   if(
     jp3fSum !== null &&
@@ -2661,8 +2747,7 @@ function Ficha02({
 
 
   /* =========================================================
-     JACKSON-POLLOCK / WARD
-     4 PLIEGUES FEMENINO
+     JACKSON-POLLOCK / WARD 4 FEMENINO
      ========================================================= */
 
   const jp4fSum =
@@ -2680,7 +2765,9 @@ function Ficha02({
       :
         null;
 
+
   let jp4fDensity = null;
+
 
   if(
     jp4fSum !== null &&
@@ -2698,8 +2785,7 @@ function Ficha02({
 
 
   /* =========================================================
-     JACKSON-POLLOCK / WARD
-     7 PLIEGUES FEMENINO
+     JACKSON-POLLOCK / WARD 7 FEMENINO
      ========================================================= */
 
   const jp7fSum =
@@ -2723,7 +2809,9 @@ function Ficha02({
       :
         null;
 
+
   let jp7fDensity = null;
+
 
   if(
     jp7fSum !== null &&
@@ -2741,8 +2829,7 @@ function Ficha02({
 
 
   /* =========================================================
-     YUHASZ / CARTER
-     6 PLIEGUES
+     YUHASZ / CARTER 6
      ========================================================= */
 
   const yuhaszSum =
@@ -2764,7 +2851,9 @@ function Ficha02({
       :
         null;
 
+
   let yuhaszFat = null;
+
 
   if(
     yuhaszSum !== null &&
@@ -2790,58 +2879,65 @@ function Ficha02({
 
 
   /* =========================================================
-     SELECCIÓN DEL MÉTODO
+     SELECCIÓN DE RESULTADO
      ========================================================= */
 
   let density = null;
   let calculatedFat = null;
 
+
   if(selectedMethod === 'DW4'){
 
-    density = dwDensity;
+    density =
+      dwDensity;
 
   }
 
-  if(selectedMethod === 'JP3M'){
+  else if(selectedMethod === 'JP3M'){
 
-    density = jp3mDensity;
-
-  }
-
-  if(selectedMethod === 'JP7M'){
-
-    density = jp7mDensity;
+    density =
+      jp3mDensity;
 
   }
 
-  if(selectedMethod === 'JP3F'){
+  else if(selectedMethod === 'JP7M'){
 
-    density = jp3fDensity;
-
-  }
-
-  if(selectedMethod === 'JP4F'){
-
-    density = jp4fDensity;
+    density =
+      jp7mDensity;
 
   }
 
-  if(selectedMethod === 'JP7F'){
+  else if(selectedMethod === 'JP3F'){
 
-    density = jp7fDensity;
+    density =
+      jp3fDensity;
 
   }
 
-  if(selectedMethod === 'YUHAZ6'){
+  else if(selectedMethod === 'JP4F'){
 
-    calculatedFat = yuhaszFat;
+    density =
+      jp4fDensity;
+
+  }
+
+  else if(selectedMethod === 'JP7F'){
+
+    density =
+      jp7fDensity;
+
+  }
+
+  else if(selectedMethod === 'YUHAZ6'){
+
+    calculatedFat =
+      yuhaszFat;
 
   }
 
 
   /* =========================================================
      SIRI
-     DENSIDAD CORPORAL → % GRASA
      ========================================================= */
 
   if(
@@ -2916,7 +3012,6 @@ function Ficha02({
 
   /* =========================================================
      PERÍMETROS CORREGIDOS
-     ECUACIÓN DE LEE
      ========================================================= */
 
   const correctedArm =
@@ -2929,6 +3024,7 @@ function Ficha02({
       :
         null;
 
+
   const correctedThigh =
     thigh !== null &&
     thighSF !== null
@@ -2938,6 +3034,7 @@ function Ficha02({
         (thighSF/10)
       :
         null;
+
 
   const correctedCalf =
     calf !== null &&
@@ -2957,6 +3054,7 @@ function Ficha02({
 
   let muscleMass = null;
 
+
   if(
     height !== null &&
     age !== null &&
@@ -2970,7 +3068,9 @@ function Ficha02({
         ? 1
         : 0;
 
+
     const raceCoefficient = 0;
+
 
     muscleMass =
       height*
@@ -3010,10 +3110,6 @@ function Ficha02({
   }
 
 
-  /* =========================================================
-     % MASA MUSCULAR
-     ========================================================= */
-
   const musclePercentage =
     muscleMass !== null &&
     weight !== null &&
@@ -3028,7 +3124,6 @@ function Ficha02({
 
   /* =========================================================
      TMB
-     MIFFLIN-ST JEOR
      ========================================================= */
 
   const tmb =
@@ -3036,8 +3131,10 @@ function Ficha02({
     height !== null &&
     age !== null
       ?
+
         d.sex === 'M'
           ?
+
             10*weight+
             6.25*height-
             5*age+
@@ -3047,6 +3144,7 @@ function Ficha02({
 
             d.sex === 'F'
               ?
+
                 10*weight+
                 6.25*height-
                 5*age-
@@ -3060,17 +3158,13 @@ function Ficha02({
 
 
   /* =========================================================
-     FACTOR DE ACTIVIDAD
+     GET
      ========================================================= */
 
   const activityFactor =
     num(d.activityFactor) ||
     1.55;
 
-
-  /* =========================================================
-     GET
-     ========================================================= */
 
   const get =
     tmb !== null
@@ -3087,6 +3181,7 @@ function Ficha02({
 
   let energyAdjustment = 0;
 
+
   if(
     d.energyAdjustment === 'deficit10'
   ){
@@ -3096,7 +3191,7 @@ function Ficha02({
 
   }
 
-  if(
+  else if(
     d.energyAdjustment === 'deficit15'
   ){
 
@@ -3105,7 +3200,7 @@ function Ficha02({
 
   }
 
-  if(
+  else if(
     d.energyAdjustment === 'surplus10'
   ){
 
@@ -3114,7 +3209,7 @@ function Ficha02({
 
   }
 
-  if(
+  else if(
     d.energyAdjustment === 'surplus15'
   ){
 
@@ -3123,10 +3218,6 @@ function Ficha02({
 
   }
 
-
-  /* =========================================================
-     CALORÍAS OBJETIVO
-     ========================================================= */
 
   const calorieTarget =
     get !== null
@@ -3145,9 +3236,11 @@ function Ficha02({
     num(d.protein) ||
     1.8;
 
+
   const carbsKg =
     num(d.carbs) ||
     5;
+
 
   const fatsKg =
     num(d.fats) ||
@@ -3162,6 +3255,7 @@ function Ficha02({
       :
         null;
 
+
   const carbsDay =
     weight !== null
       ?
@@ -3169,6 +3263,7 @@ function Ficha02({
         carbsKg
       :
         null;
+
 
   const fatsDay =
     weight !== null
@@ -3187,6 +3282,7 @@ function Ficha02({
       :
         null;
 
+
   const carbsKcal =
     carbsDay !== null
       ?
@@ -3194,6 +3290,7 @@ function Ficha02({
         4
       :
         null;
+
 
   const fatsKcal =
     fatsDay !== null
@@ -3218,7 +3315,6 @@ function Ficha02({
 
   /* =========================================================
      HIDRATACIÓN
-     35 ml/kg
      ========================================================= */
 
   const hydration =
@@ -3228,6 +3324,7 @@ function Ficha02({
         35
       :
         null;
+
 
   const hydrationLiters =
     hydration !== null
@@ -3239,7 +3336,7 @@ function Ficha02({
 
 
   /* =========================================================
-     ACTUALIZAR % GRASA EN LA FICHA
+     ACTUALIZAR % GRASA
      ========================================================= */
 
   useEffect(()=>{
@@ -3258,8 +3355,10 @@ function Ficha02({
           )
         );
 
+
       const currentFat =
         num(d.fat);
+
 
       if(
         currentFat === null ||
@@ -3283,7 +3382,7 @@ function Ficha02({
 
 
   /* =========================================================
-     TARJETA DE RESULTADO
+     TARJETA DE RESULTADOS
      ========================================================= */
 
   const ResultCard =
@@ -3307,14 +3406,9 @@ function Ficha02({
             Number.isFinite(
               Number(value)
             )
-
               ?
-
-                Number(value)
-                  .toFixed(1)
-
+                Number(value).toFixed(1)
               :
-
                 '—'
           }
 
@@ -3324,13 +3418,9 @@ function Ficha02({
             Number.isFinite(
               Number(value)
             )
-
               ?
-
                 ` ${unit}`
-
               :
-
                 ''
           }
 
@@ -3342,7 +3432,7 @@ function Ficha02({
 
 
   /* =========================================================
-     COMPONENTE PARA PLIEGUES
+     COMPONENTE DE PLIEGUE
      ========================================================= */
 
   const SkinfoldInput =
@@ -3354,13 +3444,15 @@ function Ficha02({
       const result =
         skinfold(name);
 
+
       return (
 
         <div className="field">
 
           <span>
-            {label}
+            {label} (mm)
           </span>
+
 
           <div
             style={{
@@ -3388,6 +3480,7 @@ function Ficha02({
               }
             />
 
+
             <input
               type="number"
               step="0.1"
@@ -3406,6 +3499,7 @@ function Ficha02({
             />
 
           </div>
+
 
           <small>
 
@@ -3429,7 +3523,7 @@ function Ficha02({
 
 
   /* =========================================================
-     INTERFAZ FICHA 02
+     INTERFAZ
      ========================================================= */
 
   return (
@@ -3456,56 +3550,27 @@ function Ficha02({
             label="Peso (kg)"
             value={d.weight}
             onChange={
-              v=>
-                set(
-                  'weight',
-                  v
-                )
+              v=>set(
+                'weight',
+                v
+              )
             }
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Talla (cm)"
             value={d.height}
             onChange={
-              v=>
-                set(
-                  'height',
-                  v
-                )
+              v=>set(
+                'height',
+                v
+              )
             }
             type="number"
             step="0.1"
-          />
-
-          <Input
-            label="% grasa calculado"
-            value={
-              calculatedFat !== null
-                ?
-                  calculatedFat.toFixed(1)
-                :
-                  ''
-            }
-            onChange={()=>{}}
-            type="number"
-            readOnly
-          />
-
-          <Input
-            label="Masa muscular estimada (kg)"
-            value={
-              muscleMass !== null
-                ?
-                  muscleMass.toFixed(1)
-                :
-                  ''
-            }
-            onChange={()=>{}}
-            type="number"
-            readOnly
           />
 
         </div>
@@ -3528,67 +3593,66 @@ function Ficha02({
             label="Cintura (cm)"
             value={d.waist}
             onChange={
-              v=>
-                set(
-                  'waist',
-                  v
-                )
+              v=>set(
+                'waist',
+                v
+              )
             }
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Cadera (cm)"
             value={d.hip}
             onChange={
-              v=>
-                set(
-                  'hip',
-                  v
-                )
+              v=>set(
+                'hip',
+                v
+              )
             }
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Brazo relajado (cm)"
             value={d.arm}
             onChange={
-              v=>
-                set(
-                  'arm',
-                  v
-                )
+              v=>set(
+                'arm',
+                v
+              )
             }
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Muslo (cm)"
             value={d.thigh}
             onChange={
-              v=>
-                set(
-                  'thigh',
-                  v
-                )
+              v=>set(
+                'thigh',
+                v
+              )
             }
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Pantorrilla (cm)"
             value={d.calf}
             onChange={
-              v=>
-                set(
-                  'calf',
-                  v
-                )
+              v=>set(
+                'calf',
+                v
+              )
             }
             type="number"
             step="0.1"
@@ -3600,82 +3664,20 @@ function Ficha02({
 
 
       {/* =====================================================
-          3. PLIEGUES CUTÁNEOS
+          3. SELECCIÓN DE FÓRMULA
+          PRIMERO SE ELIGE LA FÓRMULA
           ===================================================== */}
 
       <Section
-        title="3. PLIEGUES CUTÁNEOS"
-        sub="Dos mediciones por sitio · promedio automático"
-      >
-
-        <div className="fields">
-
-          <SkinfoldInput
-            name="biceps"
-            label="Bíceps (mm)"
-          />
-
-          <SkinfoldInput
-            name="triceps"
-            label="Tríceps (mm)"
-          />
-
-          <SkinfoldInput
-            name="subscapular"
-            label="Subescapular (mm)"
-          />
-
-          <SkinfoldInput
-            name="suprailiac"
-            label="Suprailiaco (mm)"
-          />
-
-          <SkinfoldInput
-            name="thigh"
-            label="Muslo anterior (mm)"
-          />
-
-          <SkinfoldInput
-            name="calf"
-            label="Pantorrilla medial (mm)"
-          />
-
-          <SkinfoldInput
-            name="chest"
-            label="Pecho (mm)"
-          />
-
-          <SkinfoldInput
-            name="abdominal"
-            label="Abdominal (mm)"
-          />
-
-          <SkinfoldInput
-            name="midaxillary"
-            label="Axilar medio (mm)"
-          />
-
-        </div>
-
-      </Section>
-
-
-      {/* =====================================================
-          4. MÉTODO DE COMPOSICIÓN CORPORAL
-          ===================================================== */}
-
-      <Section
-        title="4. MÉTODO DE COMPOSICIÓN CORPORAL"
-        sub="Selección de fórmula"
+        title="3. MÉTODO DE COMPOSICIÓN CORPORAL"
+        sub="Selecciona primero la fórmula; luego aparecerán únicamente los pliegues necesarios."
       >
 
         <div className="fields">
 
           <Select
             label="Método para % grasa"
-            value={
-              selectedMethod
-            }
+            value={selectedMethod}
             onChange={
               v=>
                 set(
@@ -3717,10 +3719,11 @@ function Ficha02({
 
         </div>
 
+
         <div className="note">
 
           <b>
-            Método seleccionado:
+            Fórmula seleccionada:
           </b>{' '}
 
           {
@@ -3769,7 +3772,35 @@ function Ficha02({
 
 
       {/* =====================================================
-          5. RESULTADOS DE COMPOSICIÓN CORPORAL
+          4. PLIEGUES CUTÁNEOS
+          SOLO APARECEN LOS NECESARIOS
+          ===================================================== */}
+
+      <Section
+        title="4. PLIEGUES CUTÁNEOS"
+        sub="El sistema muestra únicamente los sitios requeridos por la fórmula seleccionada."
+      >
+
+        <div className="fields">
+
+          {
+            requiredSites.map(
+              ([name,label])=>
+                <SkinfoldInput
+                  key={name}
+                  name={name}
+                  label={label}
+                />
+            )
+          }
+
+        </div>
+
+      </Section>
+
+
+      {/* =====================================================
+          5. RESULTADOS
           ===================================================== */}
 
       <Section
@@ -3785,11 +3816,13 @@ function Ficha02({
             unit="kg/m²"
           />
 
+
           <ResultCard
             title="% grasa"
             value={calculatedFat}
             unit="%"
           />
+
 
           <ResultCard
             title="Masa grasa"
@@ -3797,17 +3830,20 @@ function Ficha02({
             unit="kg"
           />
 
+
           <ResultCard
             title="Masa libre de grasa"
             value={leanMass}
             unit="kg"
           />
 
+
           <ResultCard
             title="Masa muscular esquelética"
             value={muscleMass}
             unit="kg"
           />
+
 
           <ResultCard
             title="% masa muscular"
@@ -3816,6 +3852,7 @@ function Ficha02({
           />
 
         </div>
+
 
         <div className="note">
 
@@ -3858,11 +3895,13 @@ function Ficha02({
             unit="kcal/día"
           />
 
+
           <ResultCard
             title="GET"
             value={get}
             unit="kcal/día"
           />
+
 
           <Select
             label="Factor de actividad"
@@ -4001,7 +4040,7 @@ function Ficha02({
 
 
       {/* =====================================================
-          8. REQUERIMIENTO DE MACRONUTRIENTES
+          8. MACRONUTRIENTES
           ===================================================== */}
 
       <Section
@@ -4025,6 +4064,7 @@ function Ficha02({
             step="0.1"
           />
 
+
           <Input
             label="Carbohidratos (g/kg)"
             value={d.carbs}
@@ -4038,6 +4078,7 @@ function Ficha02({
             type="number"
             step="0.1"
           />
+
 
           <Input
             label="Grasas (g/kg)"
@@ -4103,6 +4144,7 @@ function Ficha02({
             value={hydrationLiters}
             unit="L"
           />
+
 
           <ResultCard
             title="Agua diaria"
