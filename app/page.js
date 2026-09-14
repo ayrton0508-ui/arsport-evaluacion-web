@@ -4082,7 +4082,8 @@ function Ficha02({
 }
 
 /* =========================================================
-   FICHA 03
+   FICHA 03 · MOVILIDAD, FLEXIBILIDAD Y CONTROL DEL MOVIMIENTO
+   ARSPORT
    ========================================================= */
 
 function Ficha03({
@@ -4090,223 +4091,853 @@ function Ficha03({
   set
 }){
 
-  const mob=[
-    [
-      'Tobillo – rodilla a la pared',
-      'ankleD',
-      'ankleI',
-      'cm'
-    ],
-    [
-      'Cadera – flexión',
-      'hipFlexD',
-      'hipFlexI',
-      '°'
-    ],
-    [
-      'Cadera – rotación interna',
-      'hipRotInD',
-      'hipRotInI',
-      '°'
-    ],
-    [
-      'Cadera – rotación externa',
-      'hipRotOutD',
-      'hipRotOutI',
-      '°'
-    ],
-    [
-      'Hombro – rotación externa',
-      'shoulderOutD',
-      'shoulderOutI',
-      '°'
-    ],
-    [
-      'Hombro – rotación interna',
-      'shoulderInD',
-      'shoulderInI',
-      '°'
-    ]
+  /* =======================================================
+     DATOS DE LAS PRUEBAS
+     ======================================================= */
+
+  const mobilityTests=[
+    {
+      key:'ankle',
+      name:'Tobillo – rodilla a la pared',
+      right:'ankleD',
+      left:'ankleI',
+      unit:'cm',
+      image:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=80',
+      help:'Mantener el talón apoyado y llevar la rodilla hacia la pared sin compensaciones.',
+      higherBetter:true
+    },
+    {
+      key:'hipFlex',
+      name:'Cadera – flexión',
+      right:'hipFlexD',
+      left:'hipFlexI',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el máximo rango de flexión controlada de cadera.',
+      higherBetter:true
+    },
+    {
+      key:'hipRotIn',
+      name:'Cadera – rotación interna',
+      right:'hipRotInD',
+      left:'hipRotInI',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el rango máximo de rotación interna sin compensaciones.',
+      higherBetter:true
+    },
+    {
+      key:'hipRotOut',
+      name:'Cadera – rotación externa',
+      right:'hipRotOutD',
+      left:'hipRotOutI',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el rango máximo de rotación externa controlada.',
+      higherBetter:true
+    },
+    {
+      key:'shoulderOut',
+      name:'Hombro – rotación externa',
+      right:'shoulderOutD',
+      left:'shoulderOutI',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el rango de rotación externa de ambos hombros.',
+      higherBetter:true
+    },
+    {
+      key:'shoulderIn',
+      name:'Hombro – rotación interna',
+      right:'shoulderInD',
+      left:'shoulderInI',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el rango de rotación interna de ambos hombros.',
+      higherBetter:true
+    }
   ];
+
+
+  const flexibilityTests=[
+    {
+      name:'Sit & Reach',
+      key:'sitReach',
+      unit:'cm',
+      image:'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?auto=format&fit=crop&w=900&q=80',
+      help:'Realizar el alcance anterior manteniendo las piernas extendidas.'
+    },
+    {
+      name:'Test de Ely',
+      key:'ely',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1594737625785-a6cbdabd333c?auto=format&fit=crop&w=900&q=80',
+      help:'Evaluación de flexibilidad del recto femoral.'
+    },
+    {
+      name:'Aductores',
+      key:'adductors',
+      unit:'°',
+      image:'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar el rango disponible de abducción de cadera.'
+    },
+    {
+      name:'Pectoral',
+      key:'pectoral',
+      unit:'cm',
+      image:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar la distancia o resultado correspondiente al protocolo utilizado.'
+    }
+  ];
+
+
+  /* =======================================================
+     CÁLCULOS
+     ======================================================= */
+
+  const mobilityResults=mobilityTests.map(test=>{
+
+    const r=n(d[test.right]);
+    const l=n(d[test.left]);
+
+    const asymmetry=asym(
+      d[test.right],
+      d[test.left]
+    );
+
+    let status='Pendiente';
+
+    if(asymmetry!==''){
+      if(asymmetry<=5){
+        status='Adecuado';
+      }else if(asymmetry<=10){
+        status='Vigilar';
+      }else{
+        status='Prioridad';
+      }
+    }
+
+    return{
+      ...test,
+      rightValue:r,
+      leftValue:l,
+      asymmetry,
+      status
+    };
+
+  });
+
+
+  const mobilityCompleted=
+    mobilityResults.filter(
+      x=>x.rightValue!==null&&x.leftValue!==null
+    ).length;
+
+
+  const flexibilityCompleted=
+    flexibilityTests.filter(
+      x=>n(d[x.key])!==null
+    ).length;
+
+
+  const movementTests=[
+    {
+      name:'Deep Squat',
+      key:'deepSquat',
+      unit:'0–3',
+      image:'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&w=900&q=80',
+      help:'0 = no puede realizar. 1 = ejecución deficiente. 2 = compensación. 3 = ejecución adecuada.'
+    },
+    {
+      name:'In-Line Lunge',
+      key:'lunge',
+      unit:'0–3',
+      image:'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=80',
+      help:'Registrar la puntuación de 0 a 3 según calidad del movimiento.'
+    }
+  ];
+
+
+  const squat=n(d.deepSquat);
+  const lunge=n(d.lunge);
+  const plank=n(d.plank);
+
+
+  const movementScores=[
+    squat!==null?squat:null,
+    lunge!==null?lunge:null
+  ].filter(v=>v!==null);
+
+
+  const movementAverage=
+    movementScores.length
+      ?movementScores.reduce(
+        (sum,v)=>sum+v,
+        0
+      )/movementScores.length
+      :'';
+
+
+  const movementScore100=
+    movementAverage!==''
+      ?movementAverage/3*100
+      :'';
+
+
+  const mobilityAsymmetries=
+    mobilityResults
+      .map(x=>x.asymmetry)
+      .filter(v=>v!=='');
+
+
+  const averageAsymmetry=
+    mobilityAsymmetries.length
+      ?mobilityAsymmetries.reduce(
+        (sum,v)=>sum+v,
+        0
+      )/mobilityAsymmetries.length
+      :'';
+
+
+  const highestAsymmetry=
+    mobilityAsymmetries.length
+      ?Math.max(...mobilityAsymmetries)
+      :'';
+
+
+  /* =======================================================
+     ÍNDICES GENERALES
+     ======================================================= */
+
+  const mobilityIndex=
+    mobilityAsymmetries.length
+      ?Math.max(
+        0,
+        100-(averageAsymmetry*5)
+      )
+      :'';
+
+
+  const flexibilityIndex=
+    flexibilityCompleted>0
+      ?Math.min(
+        100,
+        flexibilityCompleted/
+        flexibilityTests.length*100
+      )
+      :'';
+
+
+  const controlIndex=
+    movementScore100!==''
+      ?movementScore100
+      :'';
+
+
+  const availableIndexes=[
+    mobilityIndex,
+    flexibilityIndex,
+    controlIndex
+  ].filter(
+    v=>v!==''
+  );
+
+
+  const globalIndex=
+    availableIndexes.length
+      ?availableIndexes.reduce(
+        (sum,v)=>sum+v,
+        0
+      )/availableIndexes.length
+      :'';
+
+
+  /* =======================================================
+     ESTADO VISUAL
+     ======================================================= */
+
+  const statusFromScore=(score)=>{
+
+    if(score==='') return 'Pendiente';
+
+    if(score>=80) return 'Adecuado';
+
+    if(score>=60) return 'Vigilar';
+
+    return 'Prioridad';
+
+  };
+
+
+  const statusClass=(status)=>{
+
+    if(status==='Adecuado'){
+      return 'status-good';
+    }
+
+    if(status==='Vigilar'){
+      return 'status-warning';
+    }
+
+    if(status==='Prioridad'){
+      return 'status-danger';
+    }
+
+    return 'status-pending';
+  };
+
+
+  const globalStatus=
+    statusFromScore(
+      globalIndex
+    );
+
+
+  /* =======================================================
+     INTERPRETACIÓN AUTOMÁTICA
+     ======================================================= */
+
+  const automaticConclusion=()=>{
+
+    if(
+      mobilityCompleted===0 &&
+      flexibilityCompleted===0 &&
+      movementScores.length===0
+    ){
+      return 'Ingrese los resultados de las pruebas para generar automáticamente la interpretación funcional.';
+    }
+
+
+    const observations=[];
+
+
+    if(
+      highestAsymmetry!==''
+      &&
+      highestAsymmetry>10
+    ){
+      observations.push(
+        'Se identifica una asimetría relevante (>10%) en al menos una prueba de movilidad.'
+      );
+    }
+    else if(
+      averageAsymmetry!==''
+      &&
+      averageAsymmetry>5
+    ){
+      observations.push(
+        'Se recomienda vigilar las diferencias entre ambos lados.'
+      );
+    }
+
+
+    if(
+      movementAverage!==''
+      &&
+      movementAverage<2
+    ){
+      observations.push(
+        'El control del movimiento requiere prioridad de intervención.'
+      );
+    }
+    else if(
+      movementAverage!==''
+      &&
+      movementAverage<3
+    ){
+      observations.push(
+        'El control del movimiento presenta aspectos susceptibles de mejora.'
+      );
+    }
+
+
+    if(
+      flexibilityCompleted<
+      flexibilityTests.length
+    ){
+      observations.push(
+        'La valoración de flexibilidad todavía está incompleta.'
+      );
+    }
+
+
+    if(observations.length===0){
+
+      return(
+        'Perfil funcional adecuado según los datos registrados. Mantener el trabajo de movilidad, flexibilidad y control del movimiento y continuar con el seguimiento periódico.'
+      );
+
+    }
+
+
+    return observations.join(' ');
+
+  };
+
+
+  /* =======================================================
+     TARJETA DE IMAGEN
+     ======================================================= */
+
+  const TestVisual=({
+    image,
+    name,
+    help
+  })=>{
+
+    return(
+
+      <div
+        style={{
+          border:'1px solid #e5e7eb',
+          borderRadius:'16px',
+          overflow:'hidden',
+          background:'#fff',
+          marginBottom:'14px'
+        }}
+      >
+
+        <div
+          style={{
+            height:'150px',
+            background:'#f3f4f6',
+            overflow:'hidden'
+          }}
+        >
+
+          <img
+            src={image}
+            alt={name}
+            style={{
+              width:'100%',
+              height:'100%',
+              objectFit:'cover',
+              display:'block'
+            }}
+          />
+
+        </div>
+
+        <div
+          style={{
+            padding:'12px'
+          }}
+        >
+
+          <strong
+            style={{
+              display:'block',
+              marginBottom:'5px'
+            }}
+          >
+            {name}
+          </strong>
+
+          <small
+            style={{
+              color:'#64748b',
+              lineHeight:1.4
+            }}
+          >
+            {help}
+          </small>
+
+        </div>
+
+      </div>
+
+    );
+
+  };
+
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
 
   return <>
 
     <LinkedAthlete d={d}/>
 
+
+    {/* =====================================================
+        1. MOVILIDAD ARTICULAR
+        ===================================================== */}
+
     <Section
       title="1. MOVILIDAD ARTICULAR"
+      sub="Evaluación bilateral · registrar ambos lados"
     >
+
+      <div
+        style={{
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(260px,1fr))',
+          gap:'16px',
+          marginBottom:'20px'
+        }}
+      >
+
+        {mobilityTests.map(test=>(
+
+          <TestVisual
+            key={test.key}
+            image={test.image}
+            name={test.name}
+            help={test.help}
+          />
+
+        ))}
+
+      </div>
+
 
       <Table
         headers={[
           'Prueba',
           'Derecha',
           'Izquierda',
-          'Asimetría %',
-          'Unidad'
+          'Asimetría',
+          'Unidad',
+          'Estado'
         ]}
       >
 
-        {mob.map(x=>
+        {mobilityResults.map(test=>(
 
-          <tr key={x[0]}>
+          <tr key={test.key}>
 
             <td className="rowlabel">
-              {x[0]}
+              {test.name}
             </td>
 
+
             <CellInput
-              v={d[x[1]]}
+              v={d[test.right]}
               set={v=>
-                set(x[1],v)
+                set(
+                  test.right,
+                  v
+                )
               }
             />
 
+
             <CellInput
-              v={d[x[2]]}
+              v={d[test.left]}
               set={v=>
-                set(x[2],v)
+                set(
+                  test.left,
+                  v
+                )
               }
             />
 
-            <td>
-              {
-                asym(
-                  d[x[1]],
-                  d[x[2]]
-                )!==''
-                  ?asym(
-                    d[x[1]],
-                    d[x[2]]
-                  ).toFixed(1)+'%'
-                  :'—'
-              }
-            </td>
 
             <td>
-              {x[3]}
+
+              {test.asymmetry!==
+              ''
+                ?test.asymmetry.toFixed(1)+'%'
+                :'—'
+              }
+
+            </td>
+
+
+            <td>
+              {test.unit}
+            </td>
+
+
+            <td>
+
+              <span
+                className={
+                  `result-badge ${
+                    statusClass(
+                      test.status
+                    )
+                  }`
+                }
+              >
+                {test.status}
+              </span>
+
             </td>
 
           </tr>
 
-        )}
+        ))}
 
       </Table>
 
-    </Section>
 
-    <Section
-      title="2. FLEXIBILIDAD"
-    >
+      <div
+        className="metrics"
+        style={{
+          marginTop:'20px'
+        }}
+      >
 
-      <div className="fields">
-
-        <Input
-          label="Sit & Reach (cm)"
-          value={d.sitReach}
-          onChange={v=>
-            set('sitReach',v)
+        <Metric
+          label="Pruebas completas"
+          value={
+            mobilityCompleted
           }
+          unit={`/ ${mobilityTests.length}`}
         />
 
-        <Input
-          label="Test de Ely"
-          value={d.ely}
-          onChange={v=>
-            set('ely',v)
+
+        <Metric
+          label="Asimetría media"
+          value={
+            averageAsymmetry!==
+            ''
+              ?averageAsymmetry.toFixed(1)
+              :'—'
           }
+          unit="%"
         />
 
-        <Input
-          label="Aductores (°)"
-          value={d.adductors}
-          onChange={v=>
-            set('adductors',v)
+
+        <Metric
+          label="Mayor asimetría"
+          value={
+            highestAsymmetry!==
+            ''
+              ?highestAsymmetry.toFixed(1)
+              :'—'
           }
+          unit="%"
         />
 
-        <Input
-          label="Pectoral (cm)"
-          value={d.pectoral}
-          onChange={v=>
-            set('pectoral',v)
+
+        <Metric
+          label="Índice movilidad"
+          value={
+            mobilityIndex!==
+            ''
+              ?mobilityIndex.toFixed(0)
+              :'—'
           }
+          unit="/100"
         />
 
       </div>
 
     </Section>
 
+
+    {/* =====================================================
+        2. FLEXIBILIDAD
+        ===================================================== */}
+
+    <Section
+      title="2. FLEXIBILIDAD"
+      sub="Registrar el resultado obtenido según el protocolo aplicado"
+    >
+
+      <div
+        style={{
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(250px,1fr))',
+          gap:'16px'
+        }}
+      >
+
+        {flexibilityTests.map(test=>(
+
+          <div
+            key={test.key}
+          >
+
+            <TestVisual
+              image={test.image}
+              name={test.name}
+              help={test.help}
+            />
+
+            <Input
+              label={`${test.name} (${test.unit})`}
+              value={d[test.key]}
+              onChange={v=>
+                set(
+                  test.key,
+                  v
+                )
+              }
+              type="number"
+              step="0.1"
+            />
+
+          </div>
+
+        ))}
+
+      </div>
+
+
+      <div
+        className="metrics"
+        style={{
+          marginTop:'20px'
+        }}
+      >
+
+        <Metric
+          label="Pruebas registradas"
+          value={
+            flexibilityCompleted
+          }
+          unit={`/ ${flexibilityTests.length}`}
+        />
+
+
+        <Metric
+          label="Cobertura"
+          value={
+            (
+              flexibilityCompleted/
+              flexibilityTests.length*
+              100
+            ).toFixed(0)
+          }
+          unit="%"
+        />
+
+
+        <Metric
+          label="Índice de flexibilidad"
+          value={
+            flexibilityIndex!==
+            ''
+              ?flexibilityIndex.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        3. CONTROL DEL MOVIMIENTO
+        ===================================================== */}
+
     <Section
       title="3. CONTROL DEL MOVIMIENTO"
+      sub="Escala funcional 0–3"
     >
+
+      <div
+        style={{
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(280px,1fr))',
+          gap:'16px',
+          marginBottom:'20px'
+        }}
+      >
+
+        {movementTests.map(test=>(
+
+          <TestVisual
+            key={test.key}
+            image={test.image}
+            name={test.name}
+            help={test.help}
+          />
+
+        ))}
+
+      </div>
+
 
       <Table
         headers={[
           'Prueba',
           'Resultado',
-          'Escala / unidad',
-          'Calidad'
+          'Escala',
+          'Interpretación'
         ]}
       >
 
+        {movementTests.map(test=>{
+
+          const value=n(
+            d[test.key]
+          );
+
+          const interpretation=
+            value===null
+              ?'—'
+              :value>=3
+                ?'Adecuado'
+                :value>=2
+                  ?'Vigilar'
+                  :'Prioridad';
+
+          return(
+
+            <tr
+              key={test.key}
+            >
+
+              <td className="rowlabel">
+                {test.name}
+              </td>
+
+
+              <CellInput
+                v={d[test.key]}
+                set={v=>
+                  set(
+                    test.key,
+                    v
+                  )
+                }
+              />
+
+
+              <td>
+                0–3
+              </td>
+
+
+              <td>
+
+                <span
+                  className={
+                    `result-badge ${
+                      statusClass(
+                        interpretation
+                      )
+                    }`
+                  }
+                >
+                  {interpretation}
+                </span>
+
+              </td>
+
+            </tr>
+
+          );
+
+        })}
+
+
         <tr>
 
-          <td>
-            Deep Squat
-          </td>
-
-          <CellInput
-            v={d.deepSquat}
-            set={v=>
-              set(
-                'deepSquat',
-                v
-              )
-            }
-          />
-
-          <td>
-            0–3
-          </td>
-
-          <td>
-            {level3(d.deepSquat)}
-          </td>
-
-        </tr>
-
-        <tr>
-
-          <td>
-            In-Line Lunge
-          </td>
-
-          <CellInput
-            v={d.lunge}
-            set={v=>
-              set(
-                'lunge',
-                v
-              )
-            }
-          />
-
-          <td>
-            0–3
-          </td>
-
-          <td>
-            {level3(d.lunge)}
-          </td>
-
-        </tr>
-
-        <tr>
-
-          <td>
+          <td className="rowlabel">
             Plancha frontal
           </td>
+
 
           <CellInput
             v={d.plank}
@@ -4318,16 +4949,624 @@ function Ficha03({
             }
           />
 
+
           <td>
-            seg
+            segundos
+          </td>
+
+
+          <td>
+
+            {plank!==null
+              ?'Registrado'
+              :'—'
+            }
+
+          </td>
+
+        </tr>
+
+      </Table>
+
+
+      <div
+        className="metrics"
+        style={{
+          marginTop:'20px'
+        }}
+      >
+
+        <Metric
+          label="Puntuación control"
+          value={
+            movementScore100!==
+            ''
+              ?movementScore100.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+
+        <Metric
+          label="Promedio Deep Squat + Lunge"
+          value={
+            movementAverage!==
+            ''
+              ?movementAverage.toFixed(2)
+              :'—'
+          }
+          unit="/3"
+        />
+
+
+        <Metric
+          label="Plancha frontal"
+          value={
+            plank!==null
+              ?plank.toFixed(1)
+              :'—'
+          }
+          unit="seg"
+        />
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        4. PERFIL FUNCIONAL
+        ===================================================== */}
+
+    <Section
+      title="4. PERFIL FUNCIONAL ARSPORT"
+      sub="Resumen automático de la evaluación"
+    >
+
+      <div
+        className="metrics"
+      >
+
+        <Metric
+          label="Movilidad"
+          value={
+            mobilityIndex!==
+            ''
+              ?mobilityIndex.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+
+        <Metric
+          label="Flexibilidad"
+          value={
+            flexibilityIndex!==
+            ''
+              ?flexibilityIndex.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+
+        <Metric
+          label="Control motor"
+          value={
+            controlIndex!==
+            ''
+              ?controlIndex.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+
+        <Metric
+          label="Índice funcional"
+          value={
+            globalIndex!==
+            ''
+              ?globalIndex.toFixed(0)
+              :'—'
+          }
+          unit="/100"
+        />
+
+      </div>
+
+
+      <div
+        style={{
+          marginTop:'24px',
+          padding:'20px',
+          borderRadius:'16px',
+          background:'#111827',
+          color:'#fff'
+        }}
+      >
+
+        <div
+          style={{
+            display:'flex',
+            justifyContent:'space-between',
+            alignItems:'center',
+            gap:'15px',
+            flexWrap:'wrap'
+          }}
+        >
+
+          <div>
+
+            <small
+              style={{
+                opacity:.7
+              }}
+            >
+              ESTADO FUNCIONAL
+            </small>
+
+            <h2
+              style={{
+                margin:'5px 0 0'
+              }}
+            >
+              {globalStatus}
+            </h2>
+
+          </div>
+
+
+          <div
+            style={{
+              fontSize:'38px',
+              fontWeight:800
+            }}
+          >
+            {globalIndex!==
+            ''
+              ?globalIndex.toFixed(0)
+              :'—'
+            }
+
+            <span
+              style={{
+                fontSize:'16px',
+                opacity:.7
+              }}
+            >
+              /100
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div
+          style={{
+            marginTop:'18px',
+            height:'10px',
+            borderRadius:'20px',
+            background:'#374151',
+            overflow:'hidden'
+          }}
+        >
+
+          <div
+            style={{
+              width:
+                globalIndex!==
+                ''
+                  ?`${Math.min(
+                    100,
+                    Math.max(
+                      0,
+                      globalIndex
+                    )
+                  )}%`
+                  :'0%',
+              height:'100%',
+              background:'#facc15',
+              borderRadius:'20px',
+              transition:
+                'width .3s ease'
+            }}
+          />
+
+        </div>
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        5. ALERTAS AUTOMÁTICAS
+        ===================================================== */}
+
+    <Section
+      title="5. ALERTAS Y PUNTOS DE ATENCIÓN"
+      sub="Generado automáticamente a partir de los resultados"
+    >
+
+      <div
+        style={{
+          display:'grid',
+          gap:'10px'
+        }}
+      >
+
+        {mobilityResults
+          .filter(
+            x=>
+              x.status==='Vigilar'||
+              x.status==='Prioridad'
+          )
+          .map(x=>(
+
+            <div
+              key={x.key}
+              style={{
+                padding:'14px 16px',
+                borderRadius:'12px',
+                background:
+                  x.status==='Prioridad'
+                    ?'#fee2e2'
+                    :'#fef3c7',
+                border:
+                  x.status==='Prioridad'
+                    ?'1px solid #fecaca'
+                    :'1px solid #fde68a'
+              }}
+            >
+
+              <strong>
+                {x.name}
+              </strong>
+
+              <div
+                style={{
+                  marginTop:'4px'
+                }}
+              >
+
+                Asimetría:
+                {' '}
+                {x.asymmetry.toFixed(1)}%
+                {' · '}
+                {x.status}
+
+              </div>
+
+            </div>
+
+          ))
+        }
+
+
+        {movementTests
+          .filter(test=>{
+
+            const value=n(
+              d[test.key]
+            );
+
+            return(
+              value!==null&&
+              value<2
+            );
+
+          })
+          .map(test=>(
+
+            <div
+              key={test.key}
+              style={{
+                padding:'14px 16px',
+                borderRadius:'12px',
+                background:'#fee2e2',
+                border:'1px solid #fecaca'
+              }}
+            >
+
+              <strong>
+                {test.name}
+              </strong>
+
+              <div>
+                Puntuación:
+                {' '}
+                {d[test.key]}/3 · Prioridad
+              </div>
+
+            </div>
+
+          ))
+        }
+
+
+        {mobilityResults.filter(
+          x=>
+            x.status==='Vigilar'||
+            x.status==='Prioridad'
+        ).length===0&&
+        movementTests.filter(test=>{
+          const value=n(
+            d[test.key]
+          );
+
+          return(
+            value!==null&&
+            value<2
+          );
+        }).length===0&&(
+
+          <div
+            style={{
+              padding:'16px',
+              borderRadius:'12px',
+              background:'#f0fdf4',
+              border:'1px solid #bbf7d0'
+            }}
+          >
+
+            <strong>
+              ✓ Sin alertas funcionales
+            </strong>
+
+            <div>
+              No se detectan alertas automáticas
+              con los datos registrados.
+            </div>
+
+          </div>
+
+        )}
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        6. INTERPRETACIÓN PROFESIONAL
+        ===================================================== */}
+
+    <Section
+      title="6. INTERPRETACIÓN FUNCIONAL"
+      sub="Generación automática + observaciones del evaluador"
+    >
+
+      <div
+        style={{
+          padding:'18px',
+          borderRadius:'14px',
+          background:'#f8fafc',
+          border:'1px solid #e2e8f0',
+          marginBottom:'18px'
+        }}
+      >
+
+        <strong>
+          Interpretación automática
+        </strong>
+
+        <p
+          style={{
+            marginBottom:0,
+            lineHeight:1.6
+          }}
+        >
+          {automaticConclusion()}
+        </p>
+
+      </div>
+
+
+      <Textarea
+        label="Observaciones del evaluador"
+        value={d.mobilityObs}
+        onChange={v=>
+          set(
+            'mobilityObs',
+            v
+          )
+        }
+        placeholder="Añadir observaciones clínicas/deportivas, compensaciones, molestias, limitaciones y recomendaciones..."
+      />
+
+    </Section>
+
+
+    {/* =====================================================
+        7. RESUMEN PARA INFORME
+        ===================================================== */}
+
+    <Section
+      title="7. RESUMEN PARA INFORME ARSPORT"
+      sub="Datos listos para integrarse al informe final"
+    >
+
+      <Table
+        headers={[
+          'Área',
+          'Resultado',
+          'Índice',
+          'Estado'
+        ]}
+      >
+
+        <tr>
+
+          <td className="rowlabel">
+            Movilidad
           </td>
 
           <td>
-            {
-              n(d.plank)
-                ?'Registrado'
-                :'—'
+            {mobilityCompleted}
+            {' / '}
+            {mobilityTests.length}
+            {' pruebas'}
+          </td>
+
+          <td>
+            {mobilityIndex!==
+            ''
+              ?mobilityIndex.toFixed(0)
+              :'—'
             }
+            /100
+          </td>
+
+          <td>
+
+            <span
+              className={
+                `result-badge ${
+                  statusClass(
+                    statusFromScore(
+                      mobilityIndex
+                    )
+                  )
+                }`
+              }
+            >
+              {statusFromScore(
+                mobilityIndex
+              )}
+            </span>
+
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td className="rowlabel">
+            Flexibilidad
+          </td>
+
+          <td>
+            {flexibilityCompleted}
+            {' / '}
+            {flexibilityTests.length}
+            {' pruebas'}
+          </td>
+
+          <td>
+            {flexibilityIndex!==
+            ''
+              ?flexibilityIndex.toFixed(0)
+              :'—'
+            }
+            /100
+          </td>
+
+          <td>
+
+            <span
+              className={
+                `result-badge ${
+                  statusClass(
+                    statusFromScore(
+                      flexibilityIndex
+                    )
+                  )
+                }`
+              }
+            >
+              {statusFromScore(
+                flexibilityIndex
+              )}
+            </span>
+
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td className="rowlabel">
+            Control del movimiento
+          </td>
+
+          <td>
+            {movementScores.length}
+            {' / 2 pruebas'}
+          </td>
+
+          <td>
+            {controlIndex!==
+            ''
+              ?controlIndex.toFixed(0)
+              :'—'
+            }
+            /100
+          </td>
+
+          <td>
+
+            <span
+              className={
+                `result-badge ${
+                  statusClass(
+                    statusFromScore(
+                      controlIndex
+                    )
+                  )
+                }`
+              }
+            >
+              {statusFromScore(
+                controlIndex
+              )}
+            </span>
+
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td className="rowlabel">
+            ÍNDICE FUNCIONAL ARSPORT
+          </td>
+
+          <td>
+            Perfil general
+          </td>
+
+          <td>
+            <strong>
+              {globalIndex!==
+              ''
+                ?globalIndex.toFixed(0)
+                :'—'
+              }
+              /100
+            </strong>
+          </td>
+
+          <td>
+
+            <span
+              className={
+                `result-badge ${
+                  statusClass(
+                    globalStatus
+                  )
+                }`
+              }
+            >
+              {globalStatus}
+            </span>
+
           </td>
 
         </tr>
@@ -4336,38 +5575,8 @@ function Ficha03({
 
     </Section>
 
-    <Section
-      title="4. CONCLUSIÓN FUNCIONAL"
-    >
-
-      <Textarea
-        label="Conclusión"
-        value={d.mobilityObs}
-        onChange={v=>
-          set(
-            'mobilityObs',
-            v
-          )
-        }
-        placeholder="Interpretación funcional y prioridades..."
-      />
-
-    </Section>
-
   </>;
-}
 
-function level3(v){
-
-  const x=n(v);
-
-  return x===null
-    ?'—'
-    :x>=3
-      ?'Adecuado'
-      :x>=2
-        ?'Vigilar'
-        :'Prioridad';
 }
 
 /* =========================================================
