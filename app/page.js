@@ -5581,100 +5581,963 @@ function Ficha03({
 
 /* =========================================================
    FICHA 04
+   FUERZA Y POTENCIA
+   ARSPORT
    ========================================================= */
 
 function Ficha04({
   d,
-  c,
   set
 }){
 
-  const ex=[
-    ['Sentadilla','sq1rm'],
-    ['Peso muerto','dead1rm'],
-    ['Press banca','bench1rm'],
-    ['Press militar','ohp1rm'],
-    ['Dominadas','pull1rm']
+  /* =======================================================
+     HELPERS LOCALES
+     ======================================================= */
+
+  const num = (v) => {
+    if(v === '' || v === null || v === undefined) return null;
+
+    const x = Number(
+      String(v).replace(',','.')
+    );
+
+    return Number.isFinite(x) ? x : null;
+  };
+
+
+  const fmt = (v, decimals=2) => {
+
+    const x=num(v);
+
+    return x===null
+      ?'—'
+      :x.toFixed(decimals);
+
+  };
+
+
+  const bestAttempt = (values) => {
+
+    const valid=values
+      .map(num)
+      .filter(v=>v!==null);
+
+    return valid.length
+      ?Math.max(...valid)
+      :'';
+
+  };
+
+
+  const average = (values) => {
+
+    const valid=values
+      .map(num)
+      .filter(v=>v!==null);
+
+    return valid.length
+      ?valid.reduce(
+        (a,b)=>a+b,
+        0
+      )/valid.length
+      :'';
+
+  };
+
+
+  const epley = (load,reps) => {
+
+    const c=num(load);
+    const r=num(reps);
+
+    if(c===null || r===null || r<=0){
+      return '';
+    }
+
+    return c*(1+r/30);
+
+  };
+
+
+  const relativeStrength = (rm,weight) => {
+
+    const r=num(rm);
+    const w=num(weight);
+
+    if(r===null || w===null || w<=0){
+      return '';
+    }
+
+    return r/w;
+
+  };
+
+
+  const velocityLoss = (v1,v3) => {
+
+    const a=num(v1);
+    const b=num(v3);
+
+    if(
+      a===null ||
+      b===null ||
+      a<=0
+    ){
+      return '';
+    }
+
+    return ((a-b)/a)*100;
+
+  };
+
+
+  const asymmetry = (right,left) => {
+
+    const dR=num(right);
+    const dL=num(left);
+
+    if(
+      dR===null ||
+      dL===null
+    ){
+      return '';
+    }
+
+    const higher=Math.max(
+      Math.abs(dR),
+      Math.abs(dL)
+    );
+
+    if(higher===0){
+      return 0;
+    }
+
+    return (
+      Math.abs(dR-dL)/
+      higher
+    )*100;
+
+  };
+
+
+  const loadPercentage = (
+    load,
+    rm
+  ) => {
+
+    const l=num(load);
+    const r=num(rm);
+
+    if(
+      l===null ||
+      r===null ||
+      r<=0
+    ){
+      return '';
+    }
+
+    return (l/r)*100;
+
+  };
+
+
+  const state = (value) => {
+
+    const x=num(value);
+
+    if(x===null){
+      return {
+        label:'Pendiente',
+        className:'status-pending'
+      };
+    }
+
+    if(x>=80){
+      return {
+        label:'Adecuado',
+        className:'status-good'
+      };
+    }
+
+    if(x>=60){
+      return {
+        label:'Vigilar',
+        className:'status-warning'
+      };
+    }
+
+    return {
+      label:'Prioridad',
+      className:'status-danger'
+    };
+
+  };
+
+
+  /* =======================================================
+     PESO CORPORAL
+     ======================================================= */
+
+  const bodyWeight=
+    num(d.weight) ??
+    num(d.peso) ??
+    num(d.pesoCorporal);
+
+
+  /* =======================================================
+     1RM
+     ======================================================= */
+
+  const strengthTests=[
+
+    {
+      name:'Sentadilla',
+      load:'squatLoad',
+      reps:'squatReps',
+      rm:'squat1RM'
+    },
+
+    {
+      name:'Peso muerto',
+      load:'deadliftLoad',
+      reps:'deadliftReps',
+      rm:'deadlift1RM'
+    },
+
+    {
+      name:'Press banca',
+      load:'benchLoad',
+      reps:'benchReps',
+      rm:'bench1RM'
+    },
+
+    {
+      name:'Press militar',
+      load:'militaryLoad',
+      reps:'militaryReps',
+      rm:'military1RM'
+    },
+
+    {
+      name:'Dominadas',
+      load:'pullupLoad',
+      reps:'pullupReps',
+      rm:'pullup1RM'
+    },
+
+    {
+      name:'Remo con barra',
+      load:'rowLoad',
+      reps:'rowReps',
+      rm:'row1RM'
+    }
+
   ];
 
-  const vb=[
-    ['Sentadilla','vbtSq','sq'],
-    ['Press banca','vbtBench','bench'],
-    ['Peso muerto','vbtDead','dead'],
-    ['Press militar','vbtOHP','ohp']
+
+  const get1RM=(test)=>{
+
+    const manual=num(
+      d[test.rm]
+    );
+
+    if(manual!==null){
+      return manual;
+    }
+
+    return epley(
+      d[test.load],
+      d[test.reps]
+    );
+
+  };
+
+
+  const strengthResults=
+    strengthTests.map(test=>{
+
+      const rm=get1RM(test);
+
+      return{
+        ...test,
+        rm,
+        relative:
+          relativeStrength(
+            rm,
+            bodyWeight
+          )
+      };
+
+    });
+
+
+  const validRM=
+    strengthResults
+      .map(x=>x.rm)
+      .filter(v=>v!=='');
+
+
+  const totalRM=
+    validRM.length
+      ?validRM.reduce(
+        (a,b)=>a+b,
+        0
+      )
+      :'';
+
+
+  const averageRelative=
+    strengthResults
+      .map(x=>x.relative)
+      .filter(v=>v!=='')
+      .length
+      ?strengthResults
+        .map(x=>x.relative)
+        .filter(v=>v!=='')
+        .reduce(
+          (a,b)=>a+b,
+          0
+        )/
+        strengthResults
+          .map(x=>x.relative)
+          .filter(v=>v!=='')
+          .length
+      :'';
+
+
+  /* =======================================================
+     2. VBT / VMP
+     ======================================================= */
+
+  const vbtTests=[
+
+    {
+      name:'Sentadilla',
+      load:'vbtSquatLoad',
+      v1:'vbtSquat1',
+      v2:'vbtSquat2',
+      v3:'vbtSquat3',
+      rm:'squat1RM'
+    },
+
+    {
+      name:'Press banca',
+      load:'vbtBenchLoad',
+      v1:'vbtBench1',
+      v2:'vbtBench2',
+      v3:'vbtBench3',
+      rm:'bench1RM'
+    },
+
+    {
+      name:'Peso muerto',
+      load:'vbtDeadliftLoad',
+      v1:'vbtDeadlift1',
+      v2:'vbtDeadlift2',
+      v3:'vbtDeadlift3',
+      rm:'deadlift1RM'
+    },
+
+    {
+      name:'Press militar',
+      load:'vbtMilitaryLoad',
+      v1:'vbtMilitary1',
+      v2:'vbtMilitary2',
+      v3:'vbtMilitary3',
+      rm:'military1RM'
+    },
+
+    {
+      name:'Remo con barra',
+      load:'vbtRowLoad',
+      v1:'vbtRow1',
+      v2:'vbtRow2',
+      v3:'vbtRow3',
+      rm:'row1RM'
+    }
+
   ];
 
-  const jumps=[
-    ['SJ','sj'],
-    ['CMJ','cmj'],
-    ['ABK','abk'],
-    ['Drop Jump','drop'],
-    ['Unilateral D','uniD'],
-    ['Unilateral I','uniI']
+
+  const vbtResults=
+    vbtTests.map(test=>{
+
+      const mean=average([
+        d[test.v1],
+        d[test.v2],
+        d[test.v3]
+      ]);
+
+      const loss=velocityLoss(
+        d[test.v1],
+        d[test.v3]
+      );
+
+      const percentage=
+        loadPercentage(
+          d[test.load],
+          get1RM({
+            rm:test.rm,
+            load:'',
+            reps:''
+          })
+        );
+
+
+      return{
+        ...test,
+        mean,
+        loss,
+        percentage
+      };
+
+    });
+
+
+  /* =======================================================
+     3. SALTOS MYJUMP
+     ======================================================= */
+
+  const jumpTests=[
+
+    {
+      name:'SJ',
+      description:'Squat Jump',
+      fields:[
+        'sj1',
+        'sj2',
+        'sj3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'CMJ',
+      description:'Countermovement Jump',
+      fields:[
+        'cmj1',
+        'cmj2',
+        'cmj3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'ABK',
+      description:'Abalakov Jump',
+      fields:[
+        'abk1',
+        'abk2',
+        'abk3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Drop Jump',
+      description:'Drop Jump',
+      fields:[
+        'dropJump1',
+        'dropJump2',
+        'dropJump3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Unilateral D',
+      description:'Salto unilateral derecha',
+      fields:[
+        'unilatD1',
+        'unilatD2',
+        'unilatD3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Unilateral I',
+      description:'Salto unilateral izquierda',
+      fields:[
+        'unilatI1',
+        'unilatI2',
+        'unilatI3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Salto horizontal',
+      description:'Salto horizontal bilateral',
+      fields:[
+        'horizontal1',
+        'horizontal2',
+        'horizontal3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Horizontal unilateral D',
+      description:'Salto horizontal a una pierna derecha',
+      fields:[
+        'horizontalUnilatD1',
+        'horizontalUnilatD2',
+        'horizontalUnilatD3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Horizontal unilateral I',
+      description:'Salto horizontal a una pierna izquierda',
+      fields:[
+        'horizontalUnilatI1',
+        'horizontalUnilatI2',
+        'horizontalUnilatI3'
+      ],
+      unit:'cm'
+    },
+
+    {
+      name:'Salto triple horizontal',
+      description:'Triple salto horizontal',
+      fields:[
+        'tripleHorizontal1',
+        'tripleHorizontal2',
+        'tripleHorizontal3'
+      ],
+      unit:'cm'
+    }
+
   ];
+
+
+  const jumpResults=
+    jumpTests.map(test=>{
+
+      const attempts=test.fields.map(
+        key=>d[key]
+      );
+
+      return{
+        ...test,
+        attempts,
+        best:bestAttempt(
+          attempts
+        )
+      };
+
+    });
+
+
+  const jump=(name)=>{
+
+    const item=
+      jumpResults.find(
+        x=>x.name===name
+      );
+
+    return item
+      ?num(item.best)
+      :null;
+
+  };
+
+
+  const sj=jump('SJ');
+  const cmj=jump('CMJ');
+  const abk=jump('ABK');
+
+  const unilateralD=
+    jump('Unilateral D');
+
+  const unilateralI=
+    jump('Unilateral I');
+
+
+  const horizontalD=
+    jump(
+      'Horizontal unilateral D'
+    );
+
+  const horizontalI=
+    jump(
+      'Horizontal unilateral I'
+    );
+
+
+  /* =======================================================
+     4. ÍNDICES NEUROMUSCULARES
+     ======================================================= */
+
+  const elasticIndex=
+    sj!==null &&
+    cmj!==null &&
+    sj>0
+      ?((cmj-sj)/sj)*100
+      :'';
+
+
+  const armIndex=
+    cmj!==null &&
+    abk!==null &&
+    cmj>0
+      ?((abk-cmj)/cmj)*100
+      :'';
+
+
+  const unilateralAsymmetry=
+    asymmetry(
+      unilateralD,
+      unilateralI
+    );
+
+
+  const horizontalUnilateralAsymmetry=
+    asymmetry(
+      horizontalD,
+      horizontalI
+    );
+
+
+  const relativeForce=
+    strengthResults
+      .map(x=>x.relative)
+      .filter(v=>v!=='')
+      .length
+      ?Math.max(
+        ...strengthResults
+          .map(x=>x.relative)
+          .filter(v=>v!=='')
+      )
+      :'';
+
+
+  /* =======================================================
+     5. TARJETAS DE MÉTRICAS
+     ======================================================= */
+
+  const MetricCard=({
+    title,
+    value,
+    unit,
+    formula
+  })=>(
+
+    <div
+      style={{
+        border:'1px solid #e5e7eb',
+        borderRadius:'16px',
+        padding:'18px',
+        background:'#fff',
+        minHeight:'110px'
+      }}
+    >
+
+      <div
+        style={{
+          fontSize:'11px',
+          fontWeight:800,
+          color:'#64748b',
+          textTransform:'uppercase',
+          letterSpacing:'.04em'
+        }}
+      >
+        {title}
+      </div>
+
+
+      <div
+        style={{
+          display:'flex',
+          alignItems:'baseline',
+          gap:'6px',
+          marginTop:'8px'
+        }}
+      >
+
+        <strong
+          style={{
+            fontSize:'28px'
+          }}
+        >
+          {value}
+        </strong>
+
+        <span
+          style={{
+            color:'#64748b'
+          }}
+        >
+          {unit}
+        </span>
+
+      </div>
+
+
+      {formula&&(
+
+        <div
+          style={{
+            marginTop:'8px',
+            fontSize:'11px',
+            color:'#94a3b8'
+          }}
+        >
+          {formula}
+        </div>
+
+      )}
+
+    </div>
+
+  );
+
+
+  /* =======================================================
+     6. RENDER
+     ======================================================= */
 
   return <>
 
     <LinkedAthlete d={d}/>
 
+
+    {/* =====================================================
+        1. FUERZA MÁXIMA
+        ===================================================== */}
+
     <Section
       title="1. FUERZA MÁXIMA · 1RM"
+      sub="Registrar carga y repeticiones. El 1RM se calcula automáticamente mediante Epley."
     >
 
       <Table
         headers={[
           'Ejercicio',
+          'Carga kg',
+          'Reps',
           '1RM kg',
           '% peso corporal',
-          'Observación'
+          'Fuerza relativa',
+          'Observaciones'
         ]}
       >
 
-        {ex.map(x=>
+        {strengthResults.map(test=>{
 
-          <tr key={x[1]}>
+          const automaticRM=
+            epley(
+              d[test.load],
+              d[test.reps]
+            );
 
-            <td className="rowlabel">
-              {x[0]}
-            </td>
+          const rm=
+            num(d[test.rm])!==null
+              ?num(d[test.rm])
+              :automaticRM;
 
-            <CellInput
-              v={d[x[1]]}
-              set={v=>
-                set(
-                  x[1],
-                  v
-                )
-              }
-            />
+          const relative=
+            relativeStrength(
+              rm,
+              bodyWeight
+            );
 
-            <td>
-              {
-                d.weight&&
-                d[x[1]]
-                  ?(
-                    n(d[x[1]])/
-                    n(d.weight)*100
-                   ).toFixed(1)+'%'
+          return(
+
+            <tr
+              key={test.name}
+            >
+
+              <td className="rowlabel">
+                {test.name}
+              </td>
+
+
+              <CellInput
+                v={d[test.load]}
+                set={v=>
+                  set(
+                    test.load,
+                    v
+                  )
+                }
+              />
+
+
+              <CellInput
+                v={d[test.reps]}
+                set={v=>
+                  set(
+                    test.reps,
+                    v
+                  )
+                }
+              />
+
+
+              <td>
+
+                {rm!==null &&
+                rm!==''
+                  ?rm.toFixed(1)
                   :'—'
-              }
-            </td>
+                }
 
-            <td>
-              —
-            </td>
+              </td>
 
-          </tr>
 
-        )}
+              <td>
+
+                {bodyWeight &&
+                rm
+                  ?(
+                    rm/
+                    bodyWeight*
+                    100
+                  ).toFixed(1)+'%'
+                  :'—'
+                }
+
+              </td>
+
+
+              <td>
+
+                {relative!==
+                ''
+                  ?relative.toFixed(2)+' ×'
+                  :'—'
+                }
+
+              </td>
+
+
+              <td>
+
+                <CellInput
+                  v={
+                    d[
+                      `${test.name
+                        .toLowerCase()
+                        .replaceAll(' ','_')
+                      }_obs`
+                    ]
+                  }
+                  set={v=>
+                    set(
+                      `${test.name
+                        .toLowerCase()
+                        .replaceAll(' ','_')
+                      }_obs`,
+                      v
+                    )
+                  }
+                />
+
+              </td>
+
+            </tr>
+
+          );
+
+        })}
 
       </Table>
 
+
+      <div
+        style={{
+          marginTop:'18px',
+          padding:'15px 18px',
+          borderRadius:'14px',
+          background:'#f8fafc',
+          border:'1px solid #e2e8f0'
+        }}
+      >
+
+        <strong>
+          Fórmula 1RM
+        </strong>
+
+        <div
+          style={{
+            marginTop:'6px',
+            fontSize:'14px'
+          }}
+        >
+          <b>1RM = Carga × (1 + Repeticiones / 30)</b>
+        </div>
+
+
+        <div
+          style={{
+            marginTop:'5px',
+            fontSize:'13px',
+            color:'#64748b'
+          }}
+        >
+          Fuerza relativa = 1RM / peso corporal
+        </div>
+
+      </div>
+
+
+      <div
+        className="metrics"
+        style={{
+          marginTop:'20px'
+        }}
+      >
+
+        <MetricCard
+          title="Total 1RM"
+          value={
+            totalRM!==
+            ''
+              ?totalRM.toFixed(1)
+              :'—'
+          }
+          unit="kg"
+        />
+
+
+        <MetricCard
+          title="Promedio fuerza relativa"
+          value={
+            averageRelative!==
+            ''
+              ?averageRelative.toFixed(2)
+              :'—'
+          }
+          unit="× peso"
+        />
+
+
+        <MetricCard
+          title="Mayor fuerza relativa"
+          value={
+            relativeForce!==
+            ''
+              ?relativeForce.toFixed(2)
+              :'—'
+          }
+          unit="× peso"
+        />
+
+      </div>
+
     </Section>
 
+
+    {/* =====================================================
+        2. VELOCIDAD DE MOVIMIENTO
+        ===================================================== */}
+
     <Section
-      title="2. VELOCIDAD DE MOVIMIENTO · VBT/VMP"
-      sub="VMP = velocidad media propulsiva. Registrar tres intentos por ejercicio."
+      title="2. VELOCIDAD DE MOVIMIENTO · VBT / VMP"
+      sub="Registrar tres intentos. El sistema calcula automáticamente VMP media y pérdida de velocidad."
     >
 
       <Table
@@ -5685,249 +6548,803 @@ function Ficha04({
           'VMP 2',
           'VMP 3',
           'Media',
-          'Pérdida %',
-          'Mejor'
+          '% 1RM',
+          'Pérdida %'
         ]}
       >
 
-        {vb.map(
-          ([name,k,key])=>
+        {vbtResults.map(test=>{
 
-            <tr key={k}>
+          const mean=
+            average([
+              d[test.v1],
+              d[test.v2],
+              d[test.v3]
+            ]);
+
+          const loss=
+            velocityLoss(
+              d[test.v1],
+              d[test.v3]
+            );
+
+          const rm=
+            get1RM({
+              rm:test.rm,
+              load:'',
+              reps:''
+            });
+
+          const percentage=
+            loadPercentage(
+              d[test.load],
+              rm
+            );
+
+          return(
+
+            <tr
+              key={test.name}
+            >
 
               <td className="rowlabel">
-                {name}
+                {test.name}
               </td>
 
+
               <CellInput
-                v={d[k+'Load']}
+                v={d[test.load]}
                 set={v=>
                   set(
-                    k+'Load',
+                    test.load,
                     v
                   )
                 }
               />
 
+
               <CellInput
-                v={d[k+'1']}
+                v={d[test.v1]}
                 set={v=>
                   set(
-                    k+'1',
+                    test.v1,
                     v
                   )
                 }
               />
 
+
               <CellInput
-                v={d[k+'2']}
+                v={d[test.v2]}
                 set={v=>
                   set(
-                    k+'2',
+                    test.v2,
                     v
                   )
                 }
               />
 
+
               <CellInput
-                v={d[k+'3']}
+                v={d[test.v3]}
                 set={v=>
                   set(
-                    k+'3',
+                    test.v3,
                     v
                   )
                 }
               />
+
 
               <td>
-                {
-                  c.vbt[key]!==''
-                    ?c.vbt[key].toFixed(2)
-                    :'—'
+
+                {mean!==
+                ''
+                  ?mean.toFixed(2)
+                  :'—'
                 }
+
               </td>
 
-              <td>
-                {
-                  c.vbtLoss[key]!==''
-                    ?c.vbtLoss[key].toFixed(1)+'%'
-                    :'—'
-                }
-              </td>
 
               <td>
-                {
-                  max(
-                    d[k+'1'],
-                    d[k+'2'],
-                    d[k+'3']
-                  )||'—'
+
+                {percentage!==
+                ''
+                  ?percentage.toFixed(1)+'%'
+                  :'—'
                 }
+
+              </td>
+
+
+              <td>
+
+                {loss!==
+                ''
+                  ?loss.toFixed(1)+'%'
+                  :'—'
+                }
+
               </td>
 
             </tr>
-        )}
+
+          );
+
+        })}
 
       </Table>
 
-    </Section>
 
-    <Section
-      title="3. SALTOS · MYJUMP"
-    >
-
-      <Table
-        headers={[
-          'Prueba',
-          'I1',
-          'I2',
-          'I3',
-          'MEJOR cm'
-        ]}
+      <div
+        style={{
+          marginTop:'18px',
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(220px,1fr))',
+          gap:'14px'
+        }}
       >
 
-        {jumps.map(x=>
-
-          <tr key={x[1]}>
-
-            <td className="rowlabel">
-              {x[0]}
-            </td>
-
-            {[1,2,3].map(i=>
-
-              <CellInput
-                key={i}
-                v={
-                  d[
-                    x[1]+i
-                  ]
-                }
-                set={v=>
-                  set(
-                    x[1]+i,
-                    v
-                  )
-                }
-              />
-
-            )}
-
-            <td>
-              {c[x[1]]||'—'}
-            </td>
-
-          </tr>
-
-        )}
-
-      </Table>
-
-    </Section>
-
-    <Section
-      title="4. PERFIL NEUROMUSCULAR"
-    >
-
-      <div className="grid metrics">
-
-        <Metric
-          label="IE · Aprovechamiento elástico"
-          value={c.ie}
-          unit="%"
+        <MetricCard
+          title="Fórmula %1RM"
+          value="Carga / 1RM"
+          unit="×100"
+          formula="%1RM = Carga evaluada / 1RM × 100"
         />
 
-        <Metric
-          label="IB · Aporte de brazos"
-          value={c.ib}
-          unit="%"
-        />
 
-        <Metric
-          label="Asimetría unilateral"
-          value={c.ua}
-          unit="%"
-        />
-
-        <Metric
-          label="Fuerza relativa"
-          value={c.rel}
-          unit="× peso"
+        <MetricCard
+          title="Pérdida de velocidad"
+          value="VMP1 − VMP3"
+          unit=""
+          formula="(VMP inicial − VMP final) / VMP inicial × 100"
         />
 
       </div>
 
     </Section>
 
+
+    {/* =====================================================
+        3. SALTOS · MYJUMP
+        ===================================================== */}
+
     <Section
-      title="5. POTENCIA · TREN SUPERIOR"
+      title="3. SALTOS · MYJUMP"
+      sub="Tres intentos por prueba. El sistema selecciona automáticamente el mejor resultado."
     >
 
       <Table
         headers={[
           'Prueba',
-          'I1 m',
-          'I2',
-          'I3',
-          'MEJOR m'
+          'Intento 1',
+          'Intento 2',
+          'Intento 3',
+          'MEJOR',
+          'Unidad'
         ]}
       >
 
-        {[
-          [
-            'Balón medicinal – pecho',
-            'medChest'
-          ],
-          [
-            'Balón medicinal – detrás',
-            'medBehind'
-          ]
-        ].map(x=>
+        {jumpResults.map(test=>(
 
-          <tr key={x[1]}>
+          <tr
+            key={test.name}
+          >
 
             <td className="rowlabel">
-              {x[0]}
+
+              <div>
+                <strong>
+                  {test.name}
+                </strong>
+
+                <div
+                  style={{
+                    fontSize:'11px',
+                    color:'#94a3b8'
+                  }}
+                >
+                  {test.description}
+                </div>
+
+              </div>
+
             </td>
 
-            {[1,2,3].map(i=>
 
-              <CellInput
-                key={i}
-                v={
-                  d[
-                    x[1]+i
-                  ]
-                }
-                set={v=>
-                  set(
-                    x[1]+i,
-                    v
-                  )
-                }
-              />
+            {test.fields.map(
+              key=>(
 
+                <CellInput
+                  key={key}
+                  v={d[key]}
+                  set={v=>
+                    set(
+                      key,
+                      v
+                    )
+                  }
+                />
+
+              )
             )}
 
+
             <td>
-              {
-                max(
-                  d[x[1]+'1'],
-                  d[x[1]+'2'],
-                  d[x[1]+'3']
-                )||'—'
-              }
+
+              <strong>
+                {test.best!==
+                ''
+                  ?Number(
+                    test.best
+                  ).toFixed(1)
+                  :'—'
+                }
+              </strong>
+
+            </td>
+
+
+            <td>
+              {test.unit}
             </td>
 
           </tr>
 
-        )}
+        ))}
 
       </Table>
 
     </Section>
 
+
+    {/* =====================================================
+        4. PERFIL NEUROMUSCULAR
+        ===================================================== */}
+
+    <Section
+      title="4. PERFIL NEUROMUSCULAR"
+      sub="Índices calculados automáticamente a partir de los mejores resultados."
+    >
+
+      <div
+        style={{
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(220px,1fr))',
+          gap:'15px'
+        }}
+      >
+
+        <MetricCard
+          title="IE · Aprovechamiento elástico"
+          value={
+            elasticIndex!==
+            ''
+              ?elasticIndex.toFixed(1)
+              :'—'
+          }
+          unit="%"
+          formula="((CMJ − SJ) / SJ) × 100"
+        />
+
+
+        <MetricCard
+          title="IB · Aporte de brazos"
+          value={
+            armIndex!==
+            ''
+              ?armIndex.toFixed(1)
+              :'—'
+          }
+          unit="%"
+          formula="((ABK − CMJ) / CMJ) × 100"
+        />
+
+
+        <MetricCard
+          title="Asimetría salto vertical"
+          value={
+            unilateralAsymmetry!==
+            ''
+              ?unilateralAsymmetry.toFixed(1)
+              :'—'
+          }
+          unit="%"
+          formula="|D − I| / Mayor × 100"
+        />
+
+
+        <MetricCard
+          title="Asimetría salto horizontal"
+          value={
+            horizontalUnilateralAsymmetry!==
+            ''
+              ?horizontalUnilateralAsymmetry.toFixed(1)
+              :'—'
+          }
+          unit="%"
+          formula="|D − I| / Mayor × 100"
+        />
+
+
+        <MetricCard
+          title="Fuerza relativa máxima"
+          value={
+            relativeForce!==
+            ''
+              ?relativeForce.toFixed(2)
+              :'—'
+          }
+          unit="× peso corporal"
+          formula="1RM / peso corporal"
+        />
+
+      </div>
+
+
+      <div
+        style={{
+          marginTop:'20px',
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(220px,1fr))',
+          gap:'15px'
+        }}
+      >
+
+        <div
+          style={{
+            padding:'18px',
+            borderRadius:'15px',
+            background:'#111827',
+            color:'#fff'
+          }}
+        >
+
+          <small>
+            MEJOR SALTO VERTICAL
+          </small>
+
+          <div
+            style={{
+              fontSize:'30px',
+              fontWeight:800,
+              marginTop:'5px'
+            }}
+          >
+            {Math.max(
+              sj||0,
+              cmj||0,
+              abk||0
+            )>0
+              ?Math.max(
+                sj||0,
+                cmj||0,
+                abk||0
+              ).toFixed(1)
+              :'—'
+            }
+            {' '}
+            <span
+              style={{
+                fontSize:'14px'
+              }}
+            >
+              cm
+            </span>
+          </div>
+
+        </div>
+
+
+        <div
+          style={{
+            padding:'18px',
+            borderRadius:'15px',
+            background:'#111827',
+            color:'#fff'
+          }}
+        >
+
+          <small>
+            MEJOR SALTO HORIZONTAL
+          </small>
+
+          <div
+            style={{
+              fontSize:'30px',
+              fontWeight:800,
+              marginTop:'5px'
+            }}
+          >
+            {jump(
+              'Salto horizontal'
+            )!==null
+              ?jump(
+                'Salto horizontal'
+              ).toFixed(1)
+              :'—'
+            }
+            {' '}
+            <span
+              style={{
+                fontSize:'14px'
+              }}
+            >
+              cm
+            </span>
+          </div>
+
+        </div>
+
+
+        <div
+          style={{
+            padding:'18px',
+            borderRadius:'15px',
+            background:'#111827',
+            color:'#fff'
+          }}
+        >
+
+          <small>
+            MEJOR HORIZONTAL UNILATERAL
+          </small>
+
+          <div
+            style={{
+              fontSize:'30px',
+              fontWeight:800,
+              marginTop:'5px'
+            }}
+          >
+            {horizontalD!==null &&
+            horizontalI!==null
+              ?Math.max(
+                horizontalD,
+                horizontalI
+              ).toFixed(1)
+              :'—'
+            }
+            {' '}
+            <span
+              style={{
+                fontSize:'14px'
+              }}
+            >
+              cm
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        5. POTENCIA · TREN SUPERIOR
+        ===================================================== */}
+
+    <Section
+      title="5. POTENCIA · TREN SUPERIOR"
+      sub="Registrar tres intentos. El sistema selecciona automáticamente el mejor lanzamiento."
+    >
+
+      <Table
+        headers={[
+          'Prueba',
+          'Intento 1',
+          'Intento 2',
+          'Intento 3',
+          'MEJOR',
+          'Unidad'
+        ]}
+      >
+
+        <tr>
+
+          <td className="rowlabel">
+            Balón medicinal – pecho
+          </td>
+
+          <CellInput
+            v={d.medBallP1}
+            set={v=>
+              set(
+                'medBallP1',
+                v
+              )
+            }
+          />
+
+          <CellInput
+            v={d.medBallP2}
+            set={v=>
+              set(
+                'medBallP2',
+                v
+              )
+            }
+          />
+
+          <CellInput
+            v={d.medBallP3}
+            set={v=>
+              set(
+                'medBallP3',
+                v
+              )
+            }
+          />
+
+          <td>
+            {fmt(
+              bestAttempt([
+                d.medBallP1,
+                d.medBallP2,
+                d.medBallP3
+              ]),
+              2
+            )}
+          </td>
+
+          <td>
+            m
+          </td>
+
+        </tr>
+
+
+        <tr>
+
+          <td className="rowlabel">
+            Balón medicinal – detrás
+          </td>
+
+          <CellInput
+            v={d.medBallB1}
+            set={v=>
+              set(
+                'medBallB1',
+                v
+              )
+            }
+          />
+
+          <CellInput
+            v={d.medBallB2}
+            set={v=>
+              set(
+                'medBallB2',
+                v
+              )
+            }
+          />
+
+          <CellInput
+            v={d.medBallB3}
+            set={v=>
+              set(
+                'medBallB3',
+                v
+              )
+            }
+          />
+
+          <td>
+            {fmt(
+              bestAttempt([
+                d.medBallB1,
+                d.medBallB2,
+                d.medBallB3
+              ]),
+              2
+            )}
+          </td>
+
+          <td>
+            m
+          </td>
+
+        </tr>
+
+      </Table>
+
+    </Section>
+
+
+    {/* =====================================================
+        6. RESUMEN AUTOMÁTICO
+        ===================================================== */}
+
+    <Section
+      title="6. RESUMEN DE FUERZA Y POTENCIA"
+      sub="Resumen automático para el informe ARSPORT."
+    >
+
+      <div
+        style={{
+          display:'grid',
+          gridTemplateColumns:
+            'repeat(auto-fit,minmax(210px,1fr))',
+          gap:'14px'
+        }}
+      >
+
+        <MetricCard
+          title="Total 1RM"
+          value={
+            totalRM!==
+            ''
+              ?totalRM.toFixed(1)
+              :'—'
+          }
+          unit="kg"
+        />
+
+
+        <MetricCard
+          title="CMJ"
+          value={
+            cmj!==null
+              ?cmj.toFixed(1)
+              :'—'
+          }
+          unit="cm"
+        />
+
+
+        <MetricCard
+          title="IE"
+          value={
+            elasticIndex!==
+            ''
+              ?elasticIndex.toFixed(1)
+              :'—'
+          }
+          unit="%"
+        />
+
+
+        <MetricCard
+          title="IB"
+          value={
+            armIndex!==
+            ''
+              ?armIndex.toFixed(1)
+              :'—'
+          }
+          unit="%"
+        />
+
+
+        <MetricCard
+          title="Asimetría vertical"
+          value={
+            unilateralAsymmetry!==
+            ''
+              ?unilateralAsymmetry.toFixed(1)
+              :'—'
+          }
+          unit="%"
+        />
+
+
+        <MetricCard
+          title="Asimetría horizontal"
+          value={
+            horizontalUnilateralAsymmetry!==
+            ''
+              ?horizontalUnilateralAsymmetry.toFixed(1)
+              :'—'
+          }
+          unit="%"
+        />
+
+      </div>
+
+
+      <div
+        style={{
+          marginTop:'20px',
+          padding:'20px',
+          borderRadius:'16px',
+          background:'#111827',
+          color:'#fff'
+        }}
+      >
+
+        <div
+          style={{
+            fontSize:'11px',
+            fontWeight:800,
+            color:'#facc15',
+            textTransform:'uppercase'
+          }}
+        >
+          RESUMEN ARSPORT
+        </div>
+
+
+        <div
+          style={{
+            marginTop:'10px',
+            lineHeight:1.6
+          }}
+        >
+
+          {cmj!==null
+            ?`CMJ registrado: ${cmj.toFixed(1)} cm. `
+            :''
+          }
+
+          {elasticIndex!==
+          ''
+            ?`Aprovechamiento elástico: ${elasticIndex.toFixed(1)}%. `
+            :''
+          }
+
+          {horizontalUnilateralAsymmetry!==
+          ''
+            ?`Asimetría horizontal unilateral: ${horizontalUnilateralAsymmetry.toFixed(1)}%. `
+            :''
+          }
+
+          {relativeForce!==
+          ''
+            ?`Fuerza relativa máxima: ${relativeForce.toFixed(2)} × peso corporal.`
+            :''
+          }
+
+          {cmj===null &&
+          elasticIndex==='' &&
+          horizontalUnilateralAsymmetry==='' &&
+          relativeForce===''&&
+          (
+            'Ingrese los resultados para generar el resumen automático.'
+          )}
+
+        </div>
+
+      </div>
+
+    </Section>
+
+
+    {/* =====================================================
+        7. OBSERVACIONES
+        ===================================================== */}
+
+    <Section
+      title="7. OBSERVACIONES GENERALES"
+      sub="Anotar condiciones relevantes de la evaluación."
+    >
+
+      <Textarea
+        label="Observaciones"
+        value={
+          d.forceObs ||
+          d.fuerzaObs ||
+          ''
+        }
+        onChange={v=>
+          set(
+            'forceObs',
+            v
+          )
+        }
+        placeholder="Condiciones de evaluación, técnica, molestias, fatiga, dispositivo VBT/MyJump, observaciones del evaluador..."
+      />
+
+    </Section>
+
   </>;
+
 }
 
 /* =========================================================
