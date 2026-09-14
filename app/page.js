@@ -2356,6 +2356,1588 @@ function Ficha02({
   set
 }){
 
+  /* =========================================================
+     UTILIDADES
+     ========================================================= */
+
+  const num = value => {
+    const x = parseFloat(value);
+    return Number.isFinite(x) ? x : null;
+  };
+
+  const average = (...values) => {
+    const a = values
+      .map(num)
+      .filter(v => v !== null);
+
+    return a.length
+      ? a.reduce((s,v)=>s+v,0)/a.length
+      : null;
+  };
+
+  const weight = num(d.weight);
+  const height = num(d.height);
+  const age = num(d.age);
+
+  /* =========================================================
+     PLIEGUES CUTÁNEOS
+     ========================================================= */
+
+  const skinfold = name => {
+
+    const a = num(d[`sk_${name}_1`]);
+    const b = num(d[`sk_${name}_2`]);
+
+    return average(a,b);
+  };
+
+  const biceps = skinfold('biceps');
+  const triceps = skinfold('triceps');
+  const subscapular = skinfold('subscapular');
+  const suprailiac = skinfold('suprailiac');
+  const thighSF = skinfold('thigh');
+  const calfSF = skinfold('calf');
+  const chest = skinfold('chest');
+  const abdominal = skinfold('abdominal');
+  const midaxillarySF = skinfold('midaxillary');
+
+  /* =========================================================
+     MÉTODO DE % GRASA
+     ========================================================= */
+
+  const selectedMethod =
+    d.skinfoldFormula || 'DW4';
+
+  /* =========================================================
+     DURIN & WOMERSLEY - 4 PLIEGUES
+     Bíceps + Tríceps + Subescapular + Suprailiaco
+     ========================================================= */
+
+  const dwSum =
+    [biceps,triceps,subscapular,suprailiac]
+      .every(v=>v!==null)
+      ? biceps+
+        triceps+
+        subscapular+
+        suprailiac
+      : null;
+
+  let dwDensity = null;
+
+  if(
+    dwSum !== null &&
+    age !== null
+  ){
+
+    const logS = Math.log10(dwSum);
+
+    if(d.sex === 'M'){
+
+      if(age >= 17 && age <= 19){
+        dwDensity =
+          1.1620-
+          0.0630*logS;
+      }
+
+      else if(age >= 20 && age <= 29){
+        dwDensity =
+          1.1631-
+          0.0632*logS;
+      }
+
+      else if(age >= 30 && age <= 39){
+        dwDensity =
+          1.1422-
+          0.0544*logS;
+      }
+
+      else if(age >= 40 && age <= 49){
+        dwDensity =
+          1.1620-
+          0.0700*logS;
+      }
+
+      else if(age >= 50){
+        dwDensity =
+          1.1715-
+          0.0779*logS;
+      }
+
+    }else if(d.sex === 'F'){
+
+      if(age >= 17 && age <= 19){
+        dwDensity =
+          1.1549-
+          0.0678*logS;
+      }
+
+      else if(age >= 20 && age <= 29){
+        dwDensity =
+          1.1599-
+          0.0717*logS;
+      }
+
+      else if(age >= 30 && age <= 39){
+        dwDensity =
+          1.1423-
+          0.0632*logS;
+      }
+
+      else if(age >= 40 && age <= 49){
+        dwDensity =
+          1.1333-
+          0.0612*logS;
+      }
+
+      else if(age >= 50){
+        dwDensity =
+          1.1339-
+          0.0645*logS;
+      }
+
+    }
+  }
+
+  /* =========================================================
+     JACKSON-POLLOCK 3 MASCULINO
+     Pecho + Abdomen + Muslo
+     ========================================================= */
+
+  const jp3mSum =
+    [chest,abdominal,thighSF]
+      .every(v=>v!==null)
+      ? chest+
+        abdominal+
+        thighSF
+      : null;
+
+  let jp3mDensity = null;
+
+  if(
+    jp3mSum !== null &&
+    age !== null &&
+    d.sex === 'M'
+  ){
+
+    jp3mDensity =
+      1.10938-
+      0.0008267*jp3mSum+
+      0.0000016*(jp3mSum**2)-
+      0.0002574*age;
+  }
+
+  /* =========================================================
+     JACKSON-POLLOCK 7 MASCULINO
+     ========================================================= */
+
+  const jp7mSum =
+    [
+      chest,
+      midaxillarySF,
+      triceps,
+      subscapular,
+      abdominal,
+      suprailiac,
+      thighSF
+    ].every(v=>v!==null)
+      ?
+        chest+
+        midaxillarySF+
+        triceps+
+        subscapular+
+        abdominal+
+        suprailiac+
+        thighSF
+      :
+        null;
+
+  let jp7mDensity = null;
+
+  if(
+    jp7mSum !== null &&
+    age !== null &&
+    d.sex === 'M'
+  ){
+
+    jp7mDensity =
+      1.112-
+      0.00043499*jp7mSum+
+      0.00000055*(jp7mSum**2)-
+      0.00028826*age;
+  }
+
+  /* =========================================================
+     JACKSON-POLLOCK / WARD 3 FEMENINO
+     Tríceps + Suprailiaco + Muslo
+     ========================================================= */
+
+  const jp3fSum =
+    [
+      triceps,
+      suprailiac,
+      thighSF
+    ].every(v=>v!==null)
+      ?
+        triceps+
+        suprailiac+
+        thighSF
+      :
+        null;
+
+  let jp3fDensity = null;
+
+  if(
+    jp3fSum !== null &&
+    age !== null &&
+    d.sex === 'F'
+  ){
+
+    jp3fDensity =
+      1.0994921-
+      0.0009929*jp3fSum+
+      0.0000023*(jp3fSum**2)-
+      0.0001392*age;
+  }
+
+  /* =========================================================
+     JACKSON-POLLOCK / WARD 4 FEMENINO
+     ========================================================= */
+
+  const jp4fSum =
+    [
+      triceps,
+      suprailiac,
+      abdominal,
+      thighSF
+    ].every(v=>v!==null)
+      ?
+        triceps+
+        suprailiac+
+        abdominal+
+        thighSF
+      :
+        null;
+
+  let jp4fDensity = null;
+
+  if(
+    jp4fSum !== null &&
+    age !== null &&
+    d.sex === 'F'
+  ){
+
+    jp4fDensity =
+      1.096095-
+      0.0006952*jp4fSum+
+      0.0000011*(jp4fSum**2)-
+      0.0000714*age;
+  }
+
+  /* =========================================================
+     JACKSON-POLLOCK / WARD 7 FEMENINO
+     ========================================================= */
+
+  const jp7fSum =
+    [
+      chest,
+      midaxillarySF,
+      triceps,
+      subscapular,
+      abdominal,
+      suprailiac,
+      thighSF
+    ].every(v=>v!==null)
+      ?
+        chest+
+        midaxillarySF+
+        triceps+
+        subscapular+
+        abdominal+
+        suprailiac+
+        thighSF
+      :
+        null;
+
+  let jp7fDensity = null;
+
+  if(
+    jp7fSum !== null &&
+    age !== null &&
+    d.sex === 'F'
+  ){
+
+    jp7fDensity =
+      1.097-
+      0.00046971*jp7fSum+
+      0.00000056*(jp7fSum**2)-
+      0.00012828*age;
+  }
+
+  /* =========================================================
+     YUHAZS / CARTER - 6 PLIEGUES
+     Tríceps + Subescapular + Suprailiaco
+     + Abdomen + Muslo + Pantorrilla
+     ========================================================= */
+
+  const yuhaszSum =
+    [
+      triceps,
+      subscapular,
+      suprailiac,
+      abdominal,
+      thighSF,
+      calfSF
+    ].every(v=>v!==null)
+      ?
+        triceps+
+        subscapular+
+        suprailiac+
+        abdominal+
+        thighSF+
+        calfSF
+      :
+        null;
+
+  let yuhaszFat = null;
+
+  if(
+    yuhaszSum !== null &&
+    d.sex === 'M'
+  ){
+
+    yuhaszFat =
+      0.1051*yuhaszSum+
+      2.585;
+  }
+
+  else if(
+    yuhaszSum !== null &&
+    d.sex === 'F'
+  ){
+
+    yuhaszFat =
+      0.1548*yuhaszSum+
+      3.5803;
+  }
+
+  /* =========================================================
+     SELECCIÓN DEL MÉTODO
+     ========================================================= */
+
+  let density = null;
+  let calculatedFat = null;
+
+  if(selectedMethod === 'DW4'){
+    density = dwDensity;
+  }
+
+  if(selectedMethod === 'JP3M'){
+    density = jp3mDensity;
+  }
+
+  if(selectedMethod === 'JP7M'){
+    density = jp7mDensity;
+  }
+
+  if(selectedMethod === 'JP3F'){
+    density = jp3fDensity;
+  }
+
+  if(selectedMethod === 'JP4F'){
+    density = jp4fDensity;
+  }
+
+  if(selectedMethod === 'JP7F'){
+    density = jp7fDensity;
+  }
+
+  if(selectedMethod === 'YUHAZ6'){
+    calculatedFat = yuhaszFat;
+  }
+
+  /* =========================================================
+     SIRI
+     Densidad corporal -> % grasa
+     ========================================================= */
+
+  if(
+    density !== null &&
+    density > 0
+  ){
+
+    calculatedFat =
+      495/density-
+      450;
+  }
+
+  /* =========================================================
+     COMPOSICIÓN CORPORAL
+     ========================================================= */
+
+  const bmi =
+    weight !== null &&
+    height !== null &&
+    height > 0
+      ?
+        weight/
+        ((height/100)**2)
+      :
+        null;
+
+  const fatMass =
+    weight !== null &&
+    calculatedFat !== null
+      ?
+        weight*
+        calculatedFat/
+        100
+      :
+        null;
+
+  const leanMass =
+    weight !== null &&
+    fatMass !== null
+      ?
+        weight-
+        fatMass
+      :
+        null;
+
+  /* =========================================================
+     MASA MUSCULAR ESQUELÉTICA
+     ECUACIÓN DE LEE
+     
+     Requiere:
+     - Talla
+     - Edad
+     - Sexo
+     - Perímetro de brazo corregido
+     - Perímetro de muslo corregido
+     - Perímetro de pantorrilla corregido
+     
+     Los perímetros están en cm.
+     Los pliegues están en mm.
+     ========================================================= */
+
+  const arm =
+    num(d.arm);
+
+  const thigh =
+    num(d.thigh);
+
+  const calf =
+    num(d.calf);
+
+  /* Perímetros corregidos */
+
+  const correctedArm =
+    arm !== null &&
+    triceps !== null
+      ?
+        arm-
+        Math.PI*
+        (triceps/10)
+      :
+        null;
+
+  const correctedThigh =
+    thigh !== null &&
+    thighSF !== null
+      ?
+        thigh-
+        Math.PI*
+        (thighSF/10)
+      :
+        null;
+
+  const correctedCalf =
+    calf !== null &&
+    calfSF !== null
+      ?
+        calf-
+        Math.PI*
+        (calfSF/10)
+      :
+        null;
+
+  let muscleMass = null;
+
+  if(
+    height !== null &&
+    age !== null &&
+    correctedArm !== null &&
+    correctedThigh !== null &&
+    correctedCalf !== null
+  ){
+
+    /*
+      Coeficiente de sexo:
+      Hombre = 1
+      Mujer = 0
+
+      Coeficiente étnico:
+      0 para población hispana
+      utilizada como aproximación
+      para ARSPORT.
+    */
+
+    const sexCoefficient =
+      d.sex === 'M'
+        ? 1
+        : 0;
+
+    const raceCoefficient = 0;
+
+    muscleMass =
+      height*
+      (
+        0.00744*
+        (correctedArm**2)
+
+        +
+
+        0.00088*
+        (correctedThigh**2)
+
+        +
+
+        0.00441*
+        (correctedCalf**2)
+      )
+
+      +
+
+      2.4*
+      sexCoefficient
+
+      -
+
+      0.048*
+      age
+
+      +
+
+      raceCoefficient
+
+      +
+
+      7.8;
+  }
+
+  const musclePercentage =
+    muscleMass !== null &&
+    weight !== null &&
+    weight > 0
+      ?
+        muscleMass/
+        weight*
+        100
+      :
+        null;
+
+  /* =========================================================
+     TMB - MIFFLIN ST JEOR
+     ========================================================= */
+
+  const tmb =
+    weight !== null &&
+    height !== null &&
+    age !== null
+      ?
+        d.sex === 'M'
+          ?
+            10*weight+
+            6.25*height-
+            5*age+
+            5
+          :
+            d.sex === 'F'
+              ?
+                10*weight+
+                6.25*height-
+                5*age-
+                161
+              :
+                null
+      :
+        null;
+
+  /* =========================================================
+     FACTOR DE ACTIVIDAD
+     ========================================================= */
+
+  const activityFactor =
+    num(d.activityFactor) ||
+    1.55;
+
+  const get =
+    tmb !== null
+      ?
+        tmb*
+        activityFactor
+      :
+        null;
+
+  /* =========================================================
+     OBJETIVO ENERGÉTICO
+     ========================================================= */
+
+  let energyAdjustment = 0;
+
+  if(
+    d.energyAdjustment ===
+    'deficit10'
+  ){
+    energyAdjustment = -0.10;
+  }
+
+  if(
+    d.energyAdjustment ===
+    'deficit15'
+  ){
+    energyAdjustment = -0.15;
+  }
+
+  if(
+    d.energyAdjustment ===
+    'surplus10'
+  ){
+    energyAdjustment = 0.10;
+  }
+
+  if(
+    d.energyAdjustment ===
+    'surplus15'
+  ){
+    energyAdjustment = 0.15;
+  }
+
+  const calorieTarget =
+    get !== null
+      ?
+        get*
+        (1+
+        energyAdjustment)
+      :
+        null;
+
+  /* =========================================================
+     MACRONUTRIENTES
+     ========================================================= */
+
+  const proteinKg =
+    num(d.protein) ||
+    1.8;
+
+  const carbsKg =
+    num(d.carbs) ||
+    5;
+
+  const fatsKg =
+    num(d.fats) ||
+    1;
+
+  const proteinDay =
+    weight !== null
+      ?
+        weight*
+        proteinKg
+      :
+        null;
+
+  const carbsDay =
+    weight !== null
+      ?
+        weight*
+        carbsKg
+      :
+        null;
+
+  const fatsDay =
+    weight !== null
+      ?
+        weight*
+        fatsKg
+      :
+        null;
+
+  const proteinKcal =
+    proteinDay !== null
+      ?
+        proteinDay*4
+      :
+        null;
+
+  const carbsKcal =
+    carbsDay !== null
+      ?
+        carbsDay*4
+      :
+        null;
+
+  const fatsKcal =
+    fatsDay !== null
+      ?
+        fatsDay*9
+      :
+        null;
+
+  const macroKcal =
+    proteinKcal !== null &&
+    carbsKcal !== null &&
+    fatsKcal !== null
+      ?
+        proteinKcal+
+        carbsKcal+
+        fatsKcal
+      :
+        null;
+
+  /* =========================================================
+     HIDRATACIÓN
+     ========================================================= */
+
+  const hydration =
+    weight !== null
+      ?
+        weight*35
+      :
+        null;
+
+  const hydrationLiters =
+    hydration !== null
+      ?
+        hydration/1000
+      :
+        null;
+
+  /* =========================================================
+     GUARDAR % GRASA AUTOMÁTICAMENTE
+     ========================================================= */
+
+  useEffect(()=>{
+
+    if(
+      calculatedFat !== null &&
+      Number.isFinite(calculatedFat)
+    ){
+
+      const safeFat =
+        Math.max(
+          1,
+          Math.min(
+            60,
+            calculatedFat
+          )
+        );
+
+      const currentFat =
+        num(d.fat);
+
+      if(
+        currentFat === null ||
+        Math.abs(
+          currentFat-
+          safeFat
+        ) > 0.01
+      ){
+
+        set(
+          'fat',
+          safeFat.toFixed(1)
+        );
+      }
+    }
+
+  },[
+    calculatedFat
+  ]);
+
+  /* =========================================================
+     TARJETA DE RESULTADO
+     ========================================================= */
+
+  const ResultCard = ({
+    title,
+    value,
+    unit=''
+  }) => (
+
+    <div className="metric">
+
+      <span>
+        {title}
+      </span>
+
+      <strong>
+
+        {
+          value !== null &&
+          value !== '' &&
+          Number.isFinite(
+            Number(value)
+          )
+            ?
+              Number(value)
+                .toFixed(1)
+            :
+              '—'
+        }
+
+        {
+          value !== null &&
+          value !== '' &&
+          Number.isFinite(
+            Number(value)
+          )
+            ?
+              ` ${unit}`
+            :
+              ''
+        }
+
+      </strong>
+
+    </div>
+  );
+
+  /* =========================================================
+     INPUT DE PLIEGUE
+     ========================================================= */
+
+  const SkinfoldInput = ({
+    name,
+    label
+  }) => {
+
+    const result =
+      skinfold(name);
+
+    return(
+
+      <div className="field">
+
+        <span>
+          {label}
+        </span>
+
+        <div
+          style={{
+            display:'grid',
+            gridTemplateColumns:
+              '1fr 1fr',
+            gap:'8px'
+          }}
+        >
+
+          <input
+            type="number"
+            step="0.1"
+            placeholder="Medición 1"
+            value={
+              d[`sk_${name}_1`] ??
+              ''
+            }
+            onChange={e=>
+              set(
+                `sk_${name}_1`,
+                e.target.value
+              )
+            }
+          />
+
+          <input
+            type="number"
+            step="0.1"
+            placeholder="Medición 2"
+            value={
+              d[`sk_${name}_2`] ??
+              ''
+            }
+            onChange={e=>
+              set(
+                `sk_${name}_2`,
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <small>
+
+          Promedio:{' '}
+
+          {
+            result !== null
+              ?
+                `${result.toFixed(1)} mm`
+              :
+                '—'
+          }
+
+        </small>
+
+      </div>
+    );
+  };
+
+  /* =========================================================
+     RENDER FICHA 02
+     ========================================================= */
+
+  return (
+
+    <>
+
+      <LinkedAthlete
+        d={d}
+      />
+
+      {/* =====================================================
+          1. MEDIDAS BÁSICAS
+          ===================================================== */}
+
+      <Section
+        title="1. MEDIDAS BÁSICAS"
+        sub="ISAK Level 1 · registro antropométrico"
+      >
+
+        <div className="fields">
+
+          <Input
+            label="Peso (kg)"
+            value={d.weight}
+            onChange={v=>
+              set('weight',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Talla (cm)"
+            value={d.height}
+            onChange={v=>
+              set('height',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="% grasa calculado"
+            value={
+              calculatedFat !== null
+                ?
+                  calculatedFat
+                    .toFixed(1)
+                :
+                  ''
+            }
+            onChange={()=>{}}
+            type="number"
+            readOnly
+          />
+
+          <Input
+            label="Masa muscular estimada (kg)"
+            value={
+              muscleMass !== null
+                ?
+                  muscleMass
+                    .toFixed(1)
+                :
+                  ''
+            }
+            onChange={()=>{}}
+            type="number"
+            readOnly
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          2. PERÍMETROS
+          ===================================================== */}
+
+      <Section
+        title="2. PERÍMETROS"
+        sub="Medición en centímetros"
+      >
+
+        <div className="fields">
+
+          <Input
+            label="Cintura (cm)"
+            value={d.waist}
+            onChange={v=>
+              set('waist',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Cadera (cm)"
+            value={d.hip}
+            onChange={v=>
+              set('hip',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Brazo relajado (cm)"
+            value={d.arm}
+            onChange={v=>
+              set('arm',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Muslo (cm)"
+            value={d.thigh}
+            onChange={v=>
+              set('thigh',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Pantorrilla (cm)"
+            value={d.calf}
+            onChange={v=>
+              set('calf',v)
+            }
+            type="number"
+            step="0.1"
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          3. PLIEGUES CUTÁNEOS
+          ===================================================== */}
+
+      <Section
+        title="3. PLIEGUES CUTÁNEOS"
+        sub="Dos mediciones por sitio · promedio automático"
+      >
+
+        <div className="fields">
+
+          <SkinfoldInput
+            name="biceps"
+            label="Bíceps (mm)"
+          />
+
+          <SkinfoldInput
+            name="triceps"
+            label="Tríceps (mm)"
+          />
+
+          <SkinfoldInput
+            name="subscapular"
+            label="Subescapular (mm)"
+          />
+
+          <SkinfoldInput
+            name="suprailiac"
+            label="Suprailiaco (mm)"
+          />
+
+          <SkinfoldInput
+            name="thigh"
+            label="Muslo anterior (mm)"
+          />
+
+          <SkinfoldInput
+            name="calf"
+            label="Pantorrilla medial (mm)"
+          />
+
+          <SkinfoldInput
+            name="chest"
+            label="Pecho (mm)"
+          />
+
+          <SkinfoldInput
+            name="abdominal"
+            label="Abdominal (mm)"
+          />
+
+          <SkinfoldInput
+            name="midaxillary"
+            label="Axilar medio (mm)"
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          4. MÉTODO DE % GRASA
+          ===================================================== */}
+
+      <Section
+        title="4. MÉTODO DE COMPOSICIÓN CORPORAL"
+        sub="Selección de fórmula"
+      >
+
+        <div className="fields">
+
+          <Select
+            label="Método para % grasa"
+            value={
+              selectedMethod
+            }
+            onChange={v=>
+              set(
+                'skinfoldFormula',
+                v
+              )
+            }
+          >
+
+            <option value="DW4">
+              Durnin & Womersley · 4 pliegues
+            </option>
+
+            <option value="JP3M">
+              Jackson-Pollock · 3 pliegues masculino
+            </option>
+
+            <option value="JP7M">
+              Jackson-Pollock · 7 pliegues masculino
+            </option>
+
+            <option value="JP3F">
+              Jackson-Pollock/Ward · 3 pliegues femenino
+            </option>
+
+            <option value="JP4F">
+              Jackson-Pollock/Ward · 4 pliegues femenino
+            </option>
+
+            <option value="JP7F">
+              Jackson-Pollock/Ward · 7 pliegues femenino
+            </option>
+
+            <option value="YUHAZ6">
+              Yuhasz/Carter · 6 pliegues
+            </option>
+
+          </Select>
+
+        </div>
+
+        <div className="note">
+
+          <b>
+            Método seleccionado:
+          </b>{' '}
+
+          {
+            selectedMethod === 'DW4'
+              ?
+                'Durnin & Womersley – 4 pliegues'
+              :
+            selectedMethod === 'JP3M'
+              ?
+                'Jackson-Pollock – 3 pliegues masculino'
+              :
+            selectedMethod === 'JP7M'
+              ?
+                'Jackson-Pollock – 7 pliegues masculino'
+              :
+            selectedMethod === 'JP3F'
+              ?
+                'Jackson-Pollock/Ward – 3 pliegues femenino'
+              :
+            selectedMethod === 'JP4F'
+              ?
+                'Jackson-Pollock/Ward – 4 pliegues femenino'
+              :
+            selectedMethod === 'JP7F'
+              ?
+                'Jackson-Pollock/Ward – 7 pliegues femenino'
+              :
+                'Yuhasz/Carter – 6 pliegues'
+          }
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          5. RESULTADOS DE COMPOSICIÓN CORPORAL
+          ===================================================== */}
+
+      <Section
+        title="5. RESULTADOS DE COMPOSICIÓN CORPORAL"
+        sub="Cálculos automáticos"
+      >
+
+        <div className="metrics">
+
+          <ResultCard
+            title="IMC"
+            value={bmi}
+            unit="kg/m²"
+          />
+
+          <ResultCard
+            title="% grasa"
+            value={calculatedFat}
+            unit="%"
+          />
+
+          <ResultCard
+            title="Masa grasa"
+            value={fatMass}
+            unit="kg"
+          />
+
+          <ResultCard
+            title="Masa libre de grasa"
+            value={leanMass}
+            unit="kg"
+          />
+
+          <ResultCard
+            title="Masa muscular esquelética"
+            value={muscleMass}
+            unit="kg"
+          />
+
+          <ResultCard
+            title="% masa muscular"
+            value={musclePercentage}
+            unit="%"
+          />
+
+        </div>
+
+        <div className="note">
+
+          <b>
+            Masa muscular esquelética:
+          </b>{' '}
+
+          estimación antropométrica mediante
+          perímetros corregidos, talla, edad y sexo.
+
+          <br/><br/>
+
+          <b>
+            Importante:
+          </b>{' '}
+
+          masa muscular y masa libre de grasa
+          son indicadores diferentes.
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          6. METABOLISMO
+          ===================================================== */}
+
+      <Section
+        title="6. METABOLISMO Y GASTO ENERGÉTICO"
+        sub="Estimación automática"
+      >
+
+        <div className="fields">
+
+          <ResultCard
+            title="TMB"
+            value={tmb}
+            unit="kcal/día"
+          />
+
+          <ResultCard
+            title="GET"
+            value={get}
+            unit="kcal/día"
+          />
+
+          <Select
+            label="Factor de actividad"
+            value={
+              d.activityFactor ||
+              '1.55'
+            }
+            onChange={v=>
+              set(
+                'activityFactor',
+                v
+              )
+            }
+          >
+
+            <option value="1.20">
+              1.20 · Sedentario
+            </option>
+
+            <option value="1.375">
+              1.375 · Ligero
+            </option>
+
+            <option value="1.55">
+              1.55 · Moderado
+            </option>
+
+            <option value="1.725">
+              1.725 · Alto
+            </option>
+
+            <option value="1.90">
+              1.90 · Muy alto
+            </option>
+
+          </Select>
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          7. OBJETIVO NUTRICIONAL
+          ===================================================== */}
+
+      <Section
+        title="7. OBJETIVO NUTRICIONAL"
+        sub="Ajuste energético"
+      >
+
+        <div className="fields">
+
+          <Select
+            label="Objetivo"
+            value={
+              d.nutritionGoal ||
+              'mantenimiento'
+            }
+            onChange={v=>
+              set(
+                'nutritionGoal',
+                v
+              )
+            }
+          >
+
+            <option value="perdida">
+              Pérdida de grasa
+            </option>
+
+            <option value="mantenimiento">
+              Mantenimiento
+            </option>
+
+            <option value="ganancia">
+              Ganancia muscular
+            </option>
+
+            <option value="rendimiento">
+              Rendimiento deportivo
+            </option>
+
+          </Select>
+
+          <Select
+            label="Ajuste energético"
+            value={
+              d.energyAdjustment ||
+              'none'
+            }
+            onChange={v=>
+              set(
+                'energyAdjustment',
+                v
+              )
+            }
+          >
+
+            <option value="none">
+              Sin ajuste
+            </option>
+
+            <option value="deficit10">
+              Déficit 10%
+            </option>
+
+            <option value="deficit15">
+              Déficit 15%
+            </option>
+
+            <option value="surplus10">
+              Superávit 10%
+            </option>
+
+            <option value="surplus15">
+              Superávit 15%
+            </option>
+
+          </Select>
+
+          <ResultCard
+            title="Calorías objetivo"
+            value={calorieTarget}
+            unit="kcal/día"
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          8. MACRONUTRIENTES
+          ===================================================== */}
+
+      <Section
+        title="8. REQUERIMIENTO DE MACRONUTRIENTES"
+        sub="Configuración por kg de peso"
+      >
+
+        <div className="fields">
+
+          <Input
+            label="Proteína (g/kg)"
+            value={d.protein}
+            onChange={v=>
+              set(
+                'protein',
+                v
+              )
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Carbohidratos (g/kg)"
+            value={d.carbs}
+            onChange={v=>
+              set(
+                'carbs',
+                v
+              )
+            }
+            type="number"
+            step="0.1"
+          />
+
+          <Input
+            label="Grasas (g/kg)"
+            value={d.fats}
+            onChange={v=>
+              set(
+                'fats',
+                v
+              )
+            }
+            type="number"
+            step="0.1"
+          />
+
+        </div>
+
+        <div className="metrics">
+
+          <ResultCard
+            title="Proteína diaria"
+            value={proteinDay}
+            unit="g"
+          />
+
+          <ResultCard
+            title="Carbohidratos diarios"
+            value={carbsDay}
+            unit="g"
+          />
+
+          <ResultCard
+            title="Grasas diarias"
+            value={fatsDay}
+            unit="g"
+          />
+
+          <ResultCard
+            title="Energía de macros"
+            value={macroKcal}
+            unit="kcal"
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          9. HIDRATACIÓN
+          ===================================================== */}
+
+      <Section
+        title="9. HIDRATACIÓN"
+        sub="Estimación inicial según peso corporal"
+      >
+
+        <div className="metrics">
+
+          <ResultCard
+            title="Agua diaria"
+            value={hydrationLiters}
+            unit="L"
+          />
+
+          <ResultCard
+            title="Agua diaria"
+            value={hydration}
+            unit="ml"
+          />
+
+        </div>
+
+      </Section>
+
+      {/* =====================================================
+          10. OBSERVACIONES
+          ===================================================== */}
+
+      <Section
+        title="10. OBSERVACIONES"
+        sub="Conclusiones de la evaluación"
+      >
+
+        <Textarea
+          label="Observaciones nutricionales"
+          value={d.nutrition}
+          onChange={v=>
+            set(
+              'nutrition',
+              v
+            )
+          }
+          placeholder="Registrar interpretación y recomendaciones..."
+        />
+
+      </Section>
+
+    </>
+
+  );
+}
+
   return <>
 
     <LinkedAthlete d={d}/>
